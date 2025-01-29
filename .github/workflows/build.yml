@@ -1,51 +1,70 @@
-name: "Main / Pull requests build"
+# This workflow will build a Java project with Maven, and cache/restore any dependencies to improve the workflow execution time
+# For more information see: https://help.github.com/actions/language-and-framework-guides/building-and-testing-java-with-maven
+
+name: WebGoat build with Maven
+
 on:
-    pull_request:
-        paths-ignore:
-            - '.txt'
-            - 'LICENSE'
-            - 'docs/**'
-        branches: [ main ]
-    push:
-        branches:
-            - main
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+permissions:
+  actions: read           # for detecting the Github Actions environment
+  id-token: write         # for creating OIDC tokens for signing
+  packages: write         # for uploading attestations
+  contents: read          # read the contents permission
+  security-events: write  # for uploading code scanning
 
 jobs:
-    pre-commit:
-        name: Pre-commit check
-        runs-on: ubuntu-latest
-        steps:
-            -   name: Checkout git repository
-                uses: actions/checkout@v4.1.6
-            -   name: Setup python
-                uses: actions/setup-python@v5
-                with:
-                    python-version: "3.9"
-            -   uses: actions/setup-java@v4
-                with:
-                    distribution: 'temurin'
-                    java-version: '23'
-            -   name: Pre-commit checks
-                uses: pre-commit/action@v3.0.1
-            -   name: pre-commit-c-lite
-                uses: pre-commit-ci/lite-action@v1.1.0
-                if: always()
-    build:
-        runs-on: ${{ matrix.os }}
-        needs: [ pre-commit ]
-        strategy:
-            fail-fast: true
-            matrix:
-                os: [ windows-latest, ubuntu-latest, macos-13 ]
-            max-parallel: 1
-        steps:
-            -   uses: actions/checkout@v4.1.6
-            -   name: Set up JDK 23
-                uses: actions/setup-java@v4.2.1
-                with:
-                    distribution: 'temurin'
-                    java-version: 23
-                    architecture: x64
-                    cache: 'maven'
-            -   name: Build with Maven
-                run: mvn --no-transfer-progress verify
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '21' ]
+    steps:
+      - name: checkout Git repository
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{matrix.java}}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{matrix.java}}
+          distribution: 'adopt'
+          cache: maven
+      - name: Extracting the artifact name and version from POM file
+        run: |
+            echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+            echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+        with:
+            oidc-provider-name:  ${{ var.OIDC_PROVIDER_NAME  }}
+            oidc-audience:  ${{ var.OIDC_AUDIENCE  }}
+      - name : Config JFrog CLI
+        run : |
+          jf mvnc --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }} --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }}
+      - name: Run a source code audit
+        run: jf audit --licenses --format=table --mvn=true --watches watch_maven_licenses --fail=false
+      - name: Build Maven 
+        run: jf mvn -B deploy --project "${{ vars.JFROG_PROJECT }}"
+      - name: Scan jar file locally with JFrog Xray
+        run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  --watches  watch_maven_code
+      - name: Build container image
+        run: |
+          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ vars.DOCKER_IMAGE_PREFIX }}${{ env.ArtifactName }}:${{ env.Version }}" --build-arg petclinicArtifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Scan docker image locally with JFrog Xray
+        run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ vars.DOCKER_IMAGE_PREFIX }}${{ env.ArtifactName }}:${{ env.Version }}"
+      - name: Push container image to JFrog Artifactory
+        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ vars.DOCKER_IMAGE_PREFIX }}${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Publish to JFrog Artifactory
+        run: |
+          # Collect environment variables for the build
+          jf rt bce --project "${{ vars.JFROG_PROJECT }}" 
+          # Collect VCS details from git and add them to the build
+          jf rt bag --project "${{ vars.JFROG_PROJECT }}"
+          # Publish build info
+          jf rt bp --project "${{ vars.JFROG_PROJECT }}"
+      #- name: Scan build with JFrog Xray
+      #  run: jf build-scan  --fail=false
