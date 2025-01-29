@@ -46,7 +46,7 @@ jobs:
       - name: Run a source code audit
         run: jf audit --licenses --format=table --mvn=true --watches watch_maven_licenses --fail=false
       - name: Build Maven 
-        run: jf mvn -B deploy --project "${{ vars.JFROG_PROJECT }}"
+        run: jf mvn -B -e deploy --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  --watches  watch_maven_code
       - name: Build container image
