@@ -31,17 +31,17 @@ resource "github_actions_variable" "var5" {
 resource "github_actions_variable" "var6" {
   repository       = "${var.repository}"
   variable_name    = "OIDC_PROVIDER_NAME"
-  value            = "${var.project}"
+  value            = "${var.OIDC_PROVIDER_NAME}"
 }
 
 resource "github_actions_variable" "var7" {
   repository       = "${var.repository}"
   variable_name    = "OIDC_AUDIENCE"
-  value            = "${var.project}"
+  value            = "${var.OIDC_AUDIENCE}"
 }
 
 resource "github_actions_variable" "var8" {
   repository       = "${var.repository}"
   variable_name    = "OIDC_IDENTITY_MAPPING"
-  value            = "${var.project}"
+  value            = "${var.OIDC_IDENTITY_MAPPING}"
 }
