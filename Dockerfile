@@ -11,8 +11,10 @@ RUN \
 
 USER webgoat
 
-COPY --chown=webgoat target/webgoat-*.jar /home/webgoat/webgoat.jar
-
+#COPY --chown=webgoat target/webgoat-*.jar /home/webgoat/webgoat.jar
+# copy jar into image
+COPY --chown=webgoat $Artifact /home/webgoat/webgoat.jar
+COPY --chown=webgoat target/classes/db/container/token.jwt /home/webgoat/token.jwt
 EXPOSE 8080
 EXPOSE 9090
 
