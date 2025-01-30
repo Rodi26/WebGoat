@@ -9,6 +9,13 @@ terraform {
       version = "2.2.1"
     }
   }
+  backend "remote" {
+      hostname = "rodolphefplus.jfrog.io"
+      organization = "soleng-terraformbe-dev-local"
+      workspaces {
+          name = "default"
+      }
+  }
 }
 
 # Configure the GitHub Provider
