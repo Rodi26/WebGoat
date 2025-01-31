@@ -121,7 +121,7 @@
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-parent</artifactId>
         <version>81</version>
-    </dependency>
+      </dependency>
       <dependency>
         <groupId>org.asciidoctor</groupId>
         <artifactId>asciidoctorj</artifactId>
