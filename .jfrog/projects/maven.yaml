@@ -1,0 +1,11 @@
+version: 1
+type: maven
+resolver:
+    serverId: rodolphefplus.jfrog.io
+    snapshotRepo: soleng-maven-dev-virtual
+    releaseRepo: soleng-maven-dev-virtual
+deployer:
+    serverId: rodolphefplus.jfrog.io
+    snapshotRepo: soleng-maven-dev-virtual
+    releaseRepo: soleng-maven-dev-virtual
+useWrapper: true
