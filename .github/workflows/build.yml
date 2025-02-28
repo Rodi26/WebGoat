@@ -61,7 +61,7 @@ jobs:
            #password: ${{ secrets.JF_PASSWORD }}
            registry: rodolphefplus.jfrog.io
            username: rodolphef@jfrog.com
-           password: cmVmdGtuOjAxOjAwMDAwMDAwMDA6eFBKWkdpRm5hVU9yZVJYNzhwMklFVk8wUDdv
+           password: ${{ secrets.JF_PASSWORD }}
       - name: Build container image
         run: |
           jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
