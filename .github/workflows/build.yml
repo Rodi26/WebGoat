@@ -44,10 +44,12 @@ jobs:
         env:
           JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Config JFrog CLI for Maven
+        run: jf mvnc --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
       - name: Run a source code audit
         run: jf audit --licenses --format=table --mvn=true --fail=false #--watches License_not_validated 
       - name: Build Maven 
-        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}" --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
       - name: Build container image
