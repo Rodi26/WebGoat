@@ -86,7 +86,8 @@
     <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.1.0</maven-source-plugin.version>
     <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
-    <maven.compiler.proc>full</maven.compiler.proc> <!--  for maven-compiler-plugin -->
+    <maven.compiler.proc>full</maven.compiler.proc>
+    <!--  for maven-compiler-plugin -->
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
 
