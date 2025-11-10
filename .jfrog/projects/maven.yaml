@@ -8,4 +8,4 @@ deployer:
     serverId: rodolphefplus.jfrog.io
     snapshotRepo: soleng-maven-dev-virtual
     releaseRepo: soleng-maven-dev-virtual
-useWrapper: true
+useWrapper: false
