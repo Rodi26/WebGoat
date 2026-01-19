@@ -107,27 +107,24 @@
   </properties>
 
   <dependencyManagement>
-  <dependencies>
-    <!-- JAXB API (javax.*) -->
-    <dependency>
-      <groupId>javax.xml.bind</groupId>
-      <artifactId>jaxb-api</artifactId>
-      <version>2.3.1</version>
-    </dependency>
+    <dependencies>
 
-    <!-- JAXB runtime implementation -->
-    <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
-      <version>2.3.9</version>
-    </dependency>
-
-    <!-- Needed by JAXB runtime on Java 11+ -->
-    <dependency>
-    <groupId>javax.activation</groupId>
-    <artifactId>javax.activation-api</artifactId>
-    <version>1.2.0</version>
-  </dependency>
+      <!-- JAXB for Java 11+ / Java 21 (keeps javax.* imports compiling) -->
+      <dependency>
+        <groupId>javax.xml.bind</groupId>
+        <artifactId>jaxb-api</artifactId>
+        <version>2.3.1</version>
+      </dependency>
+      <dependency>
+        <groupId>org.glassfish.jaxb</groupId>
+        <artifactId>jaxb-runtime</artifactId>
+        <version>2.3.9</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.activation</groupId>
+        <artifactId>javax.activation-api</artifactId>
+        <version>1.2.0</version>
+      </dependency>
 
       <dependency>
         <groupId>org.apache.commons</groupId>
@@ -297,15 +294,18 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- FIX: use Jakarta JAXB only (Boot 3 / Java 21) -->
+    <!-- JAXB: REQUIRED for javax.xml.bind.* on Java 21 -->
     <dependency>
-      <groupId>jakarta.xml.bind</groupId>
-      <artifactId>jakarta.xml.bind-api</artifactId>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jaxb</groupId>
       <artifactId>jaxb-runtime</artifactId>
-      <scope>runtime</scope>
+    </dependency>
+    <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>javax.activation-api</artifactId>
     </dependency>
 
     <dependency>
@@ -556,7 +556,6 @@
         </executions>
       </plugin>
 
-      <!-- Use the version property you already define -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -622,7 +621,6 @@
     </plugins>
   </build>
 
-  <!-- profiles left unchanged (your config is syntactically fine) -->
   <profiles>
     <profile>
       <id>local-server</id>
