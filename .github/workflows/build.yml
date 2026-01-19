@@ -39,6 +39,15 @@ jobs:
         run: |
             echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
             echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - name: Use Maven 3.9.11
+        run: |
+          MAVEN_VERSION=3.9.11
+          curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz -o maven.tgz
+          sudo tar -xzf maven.tgz -C /opt
+          echo "/opt/apache-maven-${MAVEN_VERSION}/bin" >> $GITHUB_PATH
+          mvn -v
+
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         with:
