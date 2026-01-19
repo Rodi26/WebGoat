@@ -108,25 +108,35 @@
 
   <dependencyManagement>
     <dependencies>
+    <!-- JAXB (legacy javax.*) - needed because some lessons still import javax.xml.bind.* -->
+    <dependency>
+      <groupId>javax.xml.bind</groupId>
+      <artifactId>jaxb-api</artifactId>
+      <version>2.3.1</version>
+    </dependency>
+    <dependency>
+      <groupId>javax.activation</groupId>
+      <artifactId>javax.activation-api</artifactId>
+      <version>1.2.0</version>
+    </dependency>
 
-      <!-- JAXB for Java 11+ / Java 21 (keeps javax.* imports compiling) -->
-      <dependency>
-        <groupId>javax.xml.bind</groupId>
-        <artifactId>jaxb-api</artifactId>
-        <version>2.3.1</version>
-      </dependency>
-      <dependency>
-        <groupId>org.glassfish.jaxb</groupId>
-        <artifactId>jaxb-runtime</artifactId>
-        <version>2.3.9</version>
-      </dependency>
-      <dependency>
-        <groupId>javax.activation</groupId>
-        <artifactId>javax.activation-api</artifactId>
-        <version>1.2.0</version>
-      </dependency>
-
-      <dependency>
+    <!-- JAXB (Jakarta) - Spring Boot 3 / Java 21 runtime -->
+    <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+      <version>4.0.2</version>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+      <version>4.0.5</version>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.activation</groupId>
+      <artifactId>jakarta.activation-api</artifactId>
+      <version>2.1.3</version>
+    </dependency>
+<dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-exec</artifactId>
         <version>1.4.0</version>
@@ -293,15 +303,10 @@
       <version>1.20.4</version>
       <scope>test</scope>
     </dependency>
-
-    <!-- JAXB: REQUIRED for javax.xml.bind.* on Java 21 -->
+    <!-- JAXB: keep BOTH APIs available at compile-time, and provide Jakarta JAXB runtime for Boot 3 / Java 21 -->
     <dependency>
       <groupId>javax.xml.bind</groupId>
       <artifactId>jaxb-api</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.glassfish.jaxb</groupId>
-      <artifactId>jaxb-runtime</artifactId>
     </dependency>
     <dependency>
       <groupId>javax.activation</groupId>
@@ -309,6 +314,18 @@
     </dependency>
 
     <dependency>
+      <groupId>jakarta.xml.bind</groupId>
+      <artifactId>jakarta.xml.bind-api</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.glassfish.jaxb</groupId>
+      <artifactId>jaxb-runtime</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>jakarta.activation</groupId>
+      <artifactId>jakarta.activation-api</artifactId>
+    </dependency>
+<dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
@@ -556,6 +573,7 @@
         </executions>
       </plugin>
 
+      <!-- Use the version property you already define -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -621,6 +639,7 @@
     </plugins>
   </build>
 
+  <!-- profiles left unchanged (your config is syntactically fine) -->
   <profiles>
     <profile>
       <id>local-server</id>
