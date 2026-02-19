@@ -24,6 +24,9 @@ jobs:
     name: Build and Deploy to solenglatest
     runs-on: ubuntu-latest
     environment: solenglatest
+    env:
+      BUILD_NAME: WebGoat_build_with_Maven
+      BUILD_NUMBER: ${{ github.run_number }}
     strategy:
       matrix:
         java: [ '21']
@@ -43,13 +46,17 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         with:
-          version: 2.88.0
+          version: 2.92.0
         env:
           JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
       - name: Config JFrog CLI for Maven
         run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+      - name: Verify Maven setup
+        run: mvn -version
       - name: Build Maven 
+        env:
+          JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
         run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
@@ -93,13 +100,17 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         with:
-          version: 2.88.0
+          version: 2.92.0
         env:
           JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
       - name: Config JFrog CLI for Maven
         run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+      - name: Verify Maven setup
+        run: mvn -version
       - name: Build Maven 
+        env:
+          JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
         run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
@@ -152,13 +163,17 @@ jobs:
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
         with:
-          version: 2.88.0
+          version: 2.92.0
         env:
           JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
       - name: Config JFrog CLI for Maven
         run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+      - name: Verify Maven setup
+        run: mvn -version
       - name: Build Maven 
+        env:
+          JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
         run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
