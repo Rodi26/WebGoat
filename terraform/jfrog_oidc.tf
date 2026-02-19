@@ -88,6 +88,13 @@ resource "github_actions_environment_variable" "solenglatest_docker_dev_repo" {
   value            = var.solenglatest_DOCKER_DEV_REPO
 }
 
+resource "github_actions_environment_variable" "solenglatest_jfrog_url" {
+  repository       = var.repository
+  environment      = "solenglatest"
+  variable_name    = "JFROG_URL"
+  value            = var.solenglatest_jfrog_url
+}
+
 resource "github_actions_environment_variable" "myjfrog_repo-deploy-releases" {
   repository       = var.repository
   environment      = "myjfrog"
@@ -151,6 +158,13 @@ resource "github_actions_environment_variable" "myjfrog_docker_dev_repo" {
   value            = var.myjfrog_DOCKER_DEV_REPO
 }
 
+resource "github_actions_environment_variable" "myjfrog_jfrog_url" {
+  repository       = var.repository
+  environment      = "myjfrog"
+  variable_name    = "JFROG_URL"
+  value            = var.myjfrog_jfrog_url
+}
+
 resource "github_actions_environment_variable" "artifactory_repo-deploy-releases" {
   repository       = var.repository
   environment      = "artifactory"
@@ -212,4 +226,11 @@ resource "github_actions_environment_variable" "artifactory_docker_dev_repo" {
   environment      = "artifactory"
   variable_name    = "DOCKER_DEV_REPO"
   value            = var.artifactory_DOCKER_DEV_REPO
+}
+
+resource "github_actions_environment_variable" "artifactory_jfrog_url" {
+  repository       = var.repository
+  environment      = "artifactory"
+  variable_name    = "JFROG_URL"
+  value            = var.artifactory_jfrog_url
 }

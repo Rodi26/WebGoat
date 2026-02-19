@@ -98,6 +98,10 @@ variable "solenglatest_DOCKER_DEV_REPO" {
   type = string
 }
 
+variable "solenglatest_jfrog_url" {
+  type = string
+}
+
 variable "myjfrog_repo-deploy-releases" {
   type = string
 }
@@ -134,6 +138,10 @@ variable "myjfrog_DOCKER_DEV_REPO" {
   type = string
 }
 
+variable "myjfrog_jfrog_url" {
+  type = string
+}
+
 variable "artifactory_repo-deploy-releases" {
   type = string
 }
@@ -167,6 +175,10 @@ variable "artifactory_OIDC_IDENTITY_MAPPING" {
 }
 
 variable "artifactory_DOCKER_DEV_REPO" {
+  type = string
+}
+
+variable "artifactory_jfrog_url" {
   type = string
 }
 
