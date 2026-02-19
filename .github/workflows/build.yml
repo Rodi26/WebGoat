@@ -69,14 +69,14 @@ jobs:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
+          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
         run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
       - name: Push container image to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
+        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
       - name: Publish to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
@@ -137,14 +137,14 @@ jobs:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
+          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
         run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
       - name: Push container image to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
+        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
       - name: Publish to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
@@ -205,14 +205,14 @@ jobs:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
+          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
         run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
       - name: Push container image to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
+        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
       - name: Publish to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
