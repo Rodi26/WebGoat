@@ -5,7 +5,6 @@ repo-resolve-snapshots="w2-week2-maven-dev-virtual"
 project="demo-1"
 repository="WebGoat"
 github_repository = "WebGoat"
-github_token      = 
 github_owner      = "Rodi26"
 OIDC_PROVIDER_NAME = "rodolphef-github-webgoat"
 OIDC_AUDIENCE = "rodolphef-audience-webgoat"

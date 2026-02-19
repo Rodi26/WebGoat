@@ -8,6 +8,10 @@ terraform {
       source  = "jfrog/platform"
       version = "2.2.1"
     }
+    xray = {
+      source  = "jfrog/xray"
+      version = "~> 3.1"
+    }
   }
   backend "remote" {
       hostname = "rodolphefplus.jfrog.io"
@@ -23,5 +27,10 @@ provider "github" {}
 
 provider "platform" {
   url = "${var.jfrog_url}"
+  // supply JFROG_ACCESS_TOKEN as env var
+}
+
+provider "xray" {
+  url = var.jfrog_url
   // supply JFROG_ACCESS_TOKEN as env var
 }

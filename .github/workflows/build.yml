@@ -20,9 +20,10 @@ permissions:
 
 
 jobs:
-  build:
-    name: Build
+  deploy-solenglatest:
+    name: Build and Deploy to solenglatest
     runs-on: ubuntu-latest
+    environment: solenglatest
     strategy:
       matrix:
         java: [ '21']
@@ -78,4 +79,121 @@ jobs:
           jf rt bag --project "${{ vars.JFROG_PROJECT }}"
           # Publish build info
           jf rt bp --project "${{ vars.JFROG_PROJECT }}"
-  
+  deploy-myjfrog:
+    name: Build and Deploy to myjfrog
+    runs-on: ubuntu-latest
+    environment: myjfrog
+    strategy:
+      matrix:
+        java: [ '21']
+    steps:
+      - name: checkout Git repository
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{matrix.java}}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{matrix.java}}
+          distribution: 'adopt'
+          cache: maven
+      - name: Extracting the artifact name and version 2 from POM file
+        run: |
+            echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+            echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - name: Use Maven 3.9.11
+        run: |
+          MAVEN_VERSION=3.9.11
+          curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz -o maven.tgz
+          sudo tar -xzf maven.tgz -C /opt
+          echo "/opt/apache-maven-${MAVEN_VERSION}/bin" >> $GITHUB_PATH
+          mvn -v
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: 2.88.0
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Config JFrog CLI for Maven
+        run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+      - name: Build Maven 
+        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
+      - name: Run a source code audit
+        run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
+      - name: Scan jar file locally with JFrog Xray
+        run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Build container image
+        run: |
+          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Scan docker image locally with JFrog Xray
+        run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+      - name: Push container image to JFrog Artifactory
+        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Publish to JFrog Artifactory
+        run: |
+          # Collect environment variables for the build
+          jf rt bce --project "${{ vars.JFROG_PROJECT }}" 
+          # Collect VCS details from git and add them to the build
+          jf rt bag --project "${{ vars.JFROG_PROJECT }}"
+          # Publish build info
+          jf rt bp --project "${{ vars.JFROG_PROJECT }}"
+  deploy-artifactory:
+    name: Build and Deploy to artifactory
+    runs-on: ubuntu-latest
+    environment: artifactory
+    strategy:
+      matrix:
+        java: [ '21']
+    steps:
+      - name: checkout Git repository
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{matrix.java}}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{matrix.java}}
+          distribution: 'adopt'
+          cache: maven
+      - name: Extracting the artifact name and version 2 from POM file
+        run: |
+            echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+            echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - name: Use Maven 3.9.11
+        run: |
+          MAVEN_VERSION=3.9.11
+          curl -fsSL https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz -o maven.tgz
+          sudo tar -xzf maven.tgz -C /opt
+          echo "/opt/apache-maven-${MAVEN_VERSION}/bin" >> $GITHUB_PATH
+          mvn -v
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: 2.88.0
+        env:
+          JF_URL: ${{ secrets.JF_URL }}
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Config JFrog CLI for Maven
+        run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+      - name: Build Maven 
+        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
+      - name: Run a source code audit
+        run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
+      - name: Scan jar file locally with JFrog Xray
+        run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Build container image
+        run: |
+          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Scan docker image locally with JFrog Xray
+        run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+      - name: Push container image to JFrog Artifactory
+        run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Publish to JFrog Artifactory
+        run: |
+          # Collect environment variables for the build
+          jf rt bce --project "${{ vars.JFROG_PROJECT }}" 
+          # Collect VCS details from git and add them to the build
+          jf rt bag --project "${{ vars.JFROG_PROJECT }}"
+          # Publish build info
+          jf rt bp --project "${{ vars.JFROG_PROJECT }}"

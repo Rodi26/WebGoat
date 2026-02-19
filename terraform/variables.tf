@@ -1,40 +1,49 @@
 variable "repo-deploy-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "repo-deploy-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "repo-resolve-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "repo-resolve-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "project" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "repository" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "github_token" {
-  type = string
+  type        = string
   description = "GitHub personal access token"
+  default     = ""
 }
 
 variable "github_owner" {
-  type = string
+  type        = string
   description = "GitHub organization or individual user account to manage"
+  default     = ""
 }
 
 variable "github_repository" {
-  type = string
+  type        = string
   description = "GitHub repository name"
+  default     = ""
 } 
 
 variable "jfrog_url" {
@@ -43,143 +52,177 @@ variable "jfrog_url" {
 }
 
 variable "OIDC_PROVIDER_NAME" {
-  type = string
+  type        = string
   description = "OIDC Provider Name"
+  default     = ""
 }
 
 variable "OIDC_AUDIENCE" {
-  type = string
+  type        = string
   description = "OIDC Audience"
+  default     = ""
 }
 
 variable "OIDC_IDENTITY_MAPPING" {
-  type = string
+  type        = string
   description = "OIDC identity mapping"
+  default     = ""
 }
 
 variable "DOCKER_DEV_REPO" {
-  type = string
+  type        = string
   description = "Repo for docker"
+  default     = ""
 }
 
 variable "solenglatest_repo-deploy-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_repo-deploy-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_repo-resolve-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_repo-resolve-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_project" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_OIDC_PROVIDER_NAME" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_OIDC_AUDIENCE" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_OIDC_IDENTITY_MAPPING" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_DOCKER_DEV_REPO" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "solenglatest_jfrog_url" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_repo-deploy-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_repo-deploy-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_repo-resolve-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_repo-resolve-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_project" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_OIDC_PROVIDER_NAME" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_OIDC_AUDIENCE" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_OIDC_IDENTITY_MAPPING" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_DOCKER_DEV_REPO" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "myjfrog_jfrog_url" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_repo-deploy-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_repo-deploy-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_repo-resolve-releases" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_repo-resolve-snapshots" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_project" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_OIDC_PROVIDER_NAME" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_OIDC_AUDIENCE" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_OIDC_IDENTITY_MAPPING" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_DOCKER_DEV_REPO" {
-  type = string
+  type    = string
+  default = ""
 }
 
 variable "artifactory_jfrog_url" {
-  type = string
+  type    = string
+  default = ""
 }
 
 
