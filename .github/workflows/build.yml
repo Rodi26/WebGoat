@@ -57,19 +57,30 @@ jobs:
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
-        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
       - name: Build container image
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
         run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
       - name: Push container image to JFrog Artifactory
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
       - name: Publish to JFrog Artifactory
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           # Collect environment variables for the build
           jf rt bce --project "${{ vars.JFROG_PROJECT }}" 
@@ -81,6 +92,9 @@ jobs:
     name: Build and Deploy to myjfrog
     runs-on: ubuntu-latest
     environment: myjfrog
+    env:
+      BUILD_NAME: WebGoat_build_with_Maven
+      BUILD_NUMBER: ${{ github.run_number }}
     strategy:
       matrix:
         java: [ '21']
@@ -111,28 +125,30 @@ jobs:
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
-        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
       - name: Build container image
         env:
-          BUILD_NAME: WebGoat_${{ github.job }}_${{ github.environment }}
-          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
-        env:
-          BUILD_NAME: WebGoat_${{ github.job }}_${{ github.environment }}
-          BUILD_NUMBER: ${{ github.run_id }}
         run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
       - name: Push container image to JFrog Artifactory
         env:
-          BUILD_NAME: WebGoat_${{ github.job }}_${{ github.environment }}
-          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
       - name: Publish to JFrog Artifactory
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           # Collect environment variables for the build
           jf rt bce --project "${{ vars.JFROG_PROJECT }}" 
@@ -144,6 +160,9 @@ jobs:
     name: Build and Deploy to artifactory
     runs-on: ubuntu-latest
     environment: artifactory
+    env:
+      BUILD_NAME: WebGoat_build_with_Maven
+      BUILD_NUMBER: ${{ github.run_number }}
     strategy:
       matrix:
         java: [ '21']
@@ -174,28 +193,30 @@ jobs:
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
-        run: jf mvn clean install -B -e --project "${{ vars.JFROG_PROJECT }}"
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
       - name: Build container image
         env:
-          BUILD_NAME: WebGoat_${{ github.job }}_${{ github.environment }}
-          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
-        env:
-          BUILD_NAME: WebGoat_${{ github.job }}_${{ github.environment }}
-          BUILD_NUMBER: ${{ github.run_id }}
         run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
       - name: Push container image to JFrog Artifactory
         env:
-          BUILD_NAME: WebGoat_${{ github.job }}_${{ github.environment }}
-          BUILD_NUMBER: ${{ github.run_id }}
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"  --project "${{ vars.JFROG_PROJECT }}"
       - name: Publish to JFrog Artifactory
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           # Collect environment variables for the build
           jf rt bce --project "${{ vars.JFROG_PROJECT }}" 
