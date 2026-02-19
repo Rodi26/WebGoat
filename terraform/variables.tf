@@ -62,4 +62,112 @@ variable "DOCKER_DEV_REPO" {
   description = "Repo for docker"
 }
 
+variable "solenglatest_repo-deploy-releases" {
+  type = string
+}
+
+variable "solenglatest_repo-deploy-snapshots" {
+  type = string
+}
+
+variable "solenglatest_repo-resolve-releases" {
+  type = string
+}
+
+variable "solenglatest_repo-resolve-snapshots" {
+  type = string
+}
+
+variable "solenglatest_project" {
+  type = string
+}
+
+variable "solenglatest_OIDC_PROVIDER_NAME" {
+  type = string
+}
+
+variable "solenglatest_OIDC_AUDIENCE" {
+  type = string
+}
+
+variable "solenglatest_OIDC_IDENTITY_MAPPING" {
+  type = string
+}
+
+variable "solenglatest_DOCKER_DEV_REPO" {
+  type = string
+}
+
+variable "myjfrog_repo-deploy-releases" {
+  type = string
+}
+
+variable "myjfrog_repo-deploy-snapshots" {
+  type = string
+}
+
+variable "myjfrog_repo-resolve-releases" {
+  type = string
+}
+
+variable "myjfrog_repo-resolve-snapshots" {
+  type = string
+}
+
+variable "myjfrog_project" {
+  type = string
+}
+
+variable "myjfrog_OIDC_PROVIDER_NAME" {
+  type = string
+}
+
+variable "myjfrog_OIDC_AUDIENCE" {
+  type = string
+}
+
+variable "myjfrog_OIDC_IDENTITY_MAPPING" {
+  type = string
+}
+
+variable "myjfrog_DOCKER_DEV_REPO" {
+  type = string
+}
+
+variable "artifactory_repo-deploy-releases" {
+  type = string
+}
+
+variable "artifactory_repo-deploy-snapshots" {
+  type = string
+}
+
+variable "artifactory_repo-resolve-releases" {
+  type = string
+}
+
+variable "artifactory_repo-resolve-snapshots" {
+  type = string
+}
+
+variable "artifactory_project" {
+  type = string
+}
+
+variable "artifactory_OIDC_PROVIDER_NAME" {
+  type = string
+}
+
+variable "artifactory_OIDC_AUDIENCE" {
+  type = string
+}
+
+variable "artifactory_OIDC_IDENTITY_MAPPING" {
+  type = string
+}
+
+variable "artifactory_DOCKER_DEV_REPO" {
+  type = string
+}
+
 
