@@ -35,7 +35,6 @@ jobs:
         with:
           java-version: ${{matrix.java}}
           distribution: 'adopt'
-          cache: maven
       - name: Extracting the artifact name and version 2 from POM file
         run: |
             echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
@@ -94,7 +93,6 @@ jobs:
         with:
           java-version: ${{matrix.java}}
           distribution: 'adopt'
-          cache: maven
       - name: Extracting the artifact name and version 2 from POM file
         run: |
             echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
@@ -153,7 +151,6 @@ jobs:
         with:
           java-version: ${{matrix.java}}
           distribution: 'adopt'
-          cache: maven
       - name: Extracting the artifact name and version 2 from POM file
         run: |
             echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
