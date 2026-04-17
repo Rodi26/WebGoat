@@ -3,6 +3,9 @@
 Local HTTP forward proxy for GitHub Actions: adds Google IAP OIDC to Proxy-Authorization
 so JFrog can keep Authorization: Bearer <platform token>.
 
+Request and response bodies are streamed (no full buffering) so Docker layer push/pull
+does not OOM the runner or hit artificial limits — fixes "broken pipe" on large uploads.
+
 See: https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_proxy-authorization_header
 
 Environment:
@@ -19,35 +22,26 @@ import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Dict
 
-
 UPSTREAM = os.environ.get("JF_UPSTREAM_HOST", "").strip()
 IAP_JWT = os.environ.get("IAP_GOOGLE_JWT", "").strip()
 BIND = os.environ.get("JF_IAP_PROXY_BIND", "127.0.0.1:18081").strip()
+
+# Large uploads (Docker layers) can exceed 10+ minutes behind IAP.
+UPSTREAM_TIMEOUT = int(os.environ.get("JF_IAP_PROXY_UPSTREAM_TIMEOUT", "3600"))
+READ_CHUNK = 64 * 1024
 
 if not UPSTREAM or not IAP_JWT:
     print("iap-jf-forward-proxy: need JF_UPSTREAM_HOST and IAP_GOOGLE_JWT", file=sys.stderr)
     sys.exit(1)
 
-# Origin clients use to talk to this listener (Docker push/pull via insecure registry).
 _LOCAL_HTTP_ORIGIN = f"http://{BIND}"
 
-# Response headers whose values may contain absolute upstream URLs; clients would follow them
-# over HTTPS and bypass this proxy → IAP sees no Proxy-Authorization ("empty token").
 _HEADERS_REWRITE_UPSTREAM_URLS = frozenset(
     {"www-authenticate", "location", "content-location"}
 )
 
 
 def _rewrite_upstream_absolute_urls(value: str) -> str:
-    """
-    Replace https://<UPSTREAM>/... with http://<BIND>/... so clients (Docker/registry, npm)
-    keep talking to this forwarder, which adds Proxy-Authorization for IAP.
-
-    Used for:
-    - WWW-Authenticate (realm=... OAuth token URL)
-    - Location / Content-Location (redirects to blob upload URLs, etc.)
-    """
-    # Replace longer match first so :443 is not left behind as a bogus suffix.
     v = value.replace(f"https://{UPSTREAM}:443", _LOCAL_HTTP_ORIGIN)
     v = v.replace(f"https://{UPSTREAM}", _LOCAL_HTTP_ORIGIN)
     v = v.replace(f"http://{UPSTREAM}", _LOCAL_HTTP_ORIGIN)
@@ -75,8 +69,12 @@ class ForwardHandler(BaseHTTPRequestHandler):
         print(f"[iap-jf-forward-proxy] {self.address_string()} - {fmt % args}", file=sys.stderr)
 
     def _forward(self) -> None:
-        clen = int(self.headers.get("Content-Length", 0))
-        body = self.rfile.read(clen) if clen > 0 else None
+        clen_hdr = self.headers.get("Content-Length")
+        try:
+            clen = int(clen_hdr) if clen_hdr else 0
+        except ValueError:
+            clen = 0
+        te = (self.headers.get("Transfer-Encoding") or "").lower()
 
         out_headers: Dict[str, str] = {}
         for k, v in self.headers.items():
@@ -88,25 +86,47 @@ class ForwardHandler(BaseHTTPRequestHandler):
         out_headers["Proxy-Authorization"] = f"Bearer {IAP_JWT}"
 
         ctx = ssl.create_default_context()
-        conn = http.client.HTTPSConnection(UPSTREAM, context=ctx, timeout=600)
+        conn = http.client.HTTPSConnection(UPSTREAM, context=ctx, timeout=UPSTREAM_TIMEOUT)
         try:
-            conn.request(self.command, self.path, body=body, headers=out_headers)
+            conn.putrequest(self.command, self.path)
+            for k, v in out_headers.items():
+                conn.putheader(k, v)
+            conn.endheaders()
+
+            if clen > 0:
+                remaining = clen
+                while remaining > 0:
+                    n = min(READ_CHUNK, remaining)
+                    chunk = self.rfile.read(n)
+                    if not chunk:
+                        break
+                    conn.send(chunk)
+                    remaining -= len(chunk)
+            elif "chunked" in te:
+                print(
+                    "[iap-jf-forward-proxy] chunked request body not supported; use Content-Length",
+                    file=sys.stderr,
+                )
+                self.send_error(411, "Length Required")
+                return
+
             resp = conn.getresponse()
-            # Read full body so we can send a single Content-Length. Streaming without
-            # Content-Length after stripping Transfer-Encoding confuses some clients and
-            # can truncate or corrupt binary bodies (npm tar TAR_ENTRY_INVALID).
-            payload = resp.read()
+
             self.send_response(resp.status)
+            hop = _hop_by_hop()
             for hk, hv in resp.getheaders():
-                if hk.lower() in _hop_by_hop():
+                if hk.lower() in hop:
                     continue
                 if hk.lower() in _HEADERS_REWRITE_UPSTREAM_URLS:
                     hv = _rewrite_upstream_absolute_urls(hv)
                 self.send_header(hk, hv)
-            self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
-            if payload:
-                self.wfile.write(payload)
+
+            while True:
+                chunk = resp.read(READ_CHUNK)
+                if not chunk:
+                    break
+                self.wfile.write(chunk)
         finally:
             conn.close()
 
@@ -137,7 +157,8 @@ def main() -> None:
     port = int(port_s or "18081")
     server = ThreadingHTTPServer((host, port), ForwardHandler)
     print(
-        f"iap-jf-forward-proxy: listening on http://{host}:{port} → https://{UPSTREAM}/",
+        f"iap-jf-forward-proxy: listening on http://{host}:{port} → https://{UPSTREAM}/ "
+        f"(streamed I/O, upstream_timeout={UPSTREAM_TIMEOUT}s)",
         flush=True,
     )
     server.serve_forever()

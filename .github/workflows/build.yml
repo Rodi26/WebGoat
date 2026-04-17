@@ -30,6 +30,8 @@ jobs:
       JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
       JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
       JF_URL: ${{ secrets.JF_URL }}
+      # Optionnel : repo Artifactory remote vers releases.jfrog.io (évite 502 sur l’extractor Maven). Format : setup-jfrog-cli-server/<nom-repo>
+      JFROG_CLI_RELEASES_REPO: ${{ vars.JFROG_CLI_RELEASES_REPO }}
     strategy:
       matrix:
         java: [ '21']
@@ -103,7 +105,16 @@ jobs:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if jf mvn clean install -B -e -DskipTests --project "${JFROG_PROJECT}"; then
+              exit 0
+            fi
+            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
+            sleep 60
+          done
+          exit 1
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
@@ -155,6 +166,7 @@ jobs:
       JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
       JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
       JF_URL: ${{ secrets.JF_URL }}
+      JFROG_CLI_RELEASES_REPO: ${{ vars.JFROG_CLI_RELEASES_REPO }}
     strategy:
       matrix:
         java: [ '21']
@@ -227,7 +239,16 @@ jobs:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if jf mvn clean install -B -e -DskipTests --project "${JFROG_PROJECT}"; then
+              exit 0
+            fi
+            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
+            sleep 60
+          done
+          exit 1
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
@@ -285,6 +306,7 @@ jobs:
       # écraseraient GITHUB_ENV (proxy 127.0.0.1 ou split-DNS). Voir steps ci-dessous.
       JF_IAP_PROXY_MODE: "false"
       JF_IAP_PROXY_PORT: "18081"
+      JFROG_CLI_RELEASES_REPO: ${{ vars.JFROG_CLI_RELEASES_REPO }}
     strategy:
       matrix:
         java: [ '21']
@@ -327,6 +349,13 @@ jobs:
         run: |
           echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
           echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      # Avant setup-jfrog-cli / jf mvn : normalise JF_URL + DOCKER_IMAGE_REF (comme solenglatest).
+      - name: Docker image reference (registry host from JF_REGISTRY_HOST or JF_URL)
+        env:
+          DOCKER_REPO: ${{ vars.DOCKER_DEV_REPO }}
+          JFROG_URL_FALLBACK: ${{ vars.JFROG_URL }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/compute-docker-image-ref.py"
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
@@ -378,16 +407,20 @@ jobs:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
+        run: |
+          set -euo pipefail
+          for attempt in 1 2 3 4 5; do
+            if jf mvn clean install -B -e -DskipTests --project "${JFROG_PROJECT}"; then
+              exit 0
+            fi
+            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
+            sleep 60
+          done
+          exit 1
       - name: Run a source code audit
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
-      - name: Docker image reference (registry host from JF_REGISTRY_HOST or JF_URL)
-        env:
-          DOCKER_REPO: ${{ vars.DOCKER_DEV_REPO }}
-          JFROG_URL_FALLBACK: ${{ vars.JFROG_URL }}
-        run: python3 "${GITHUB_WORKSPACE}/scripts/compute-docker-image-ref.py"
       - name: Authenticate Docker for IAP proxy
         env:
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
