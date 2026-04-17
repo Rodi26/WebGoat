@@ -194,6 +194,9 @@ class ForwardHandler(BaseHTTPRequestHandler):
             self.send_header(hk, hv)
         if clen_hdr is not None:
             n = int(clen_hdr)
+            # _hop_by_hop strips Content-Length (needed for request forwarding). For responses
+            # the client must see Content-Length (or chunked TE) or it may block on keep-alive.
+            self.send_header("Content-Length", clen_hdr)
             self.end_headers()
             remaining = n
             while remaining > 0:
