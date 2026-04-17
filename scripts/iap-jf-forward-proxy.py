@@ -21,6 +21,7 @@ import ssl
 import sys
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from typing import Dict
+from urllib.parse import urlparse
 
 UPSTREAM = os.environ.get("JF_UPSTREAM_HOST", "").strip()
 IAP_JWT = os.environ.get("IAP_GOOGLE_JWT", "").strip()
@@ -62,6 +63,23 @@ def _hop_by_hop() -> set[str]:
     }
 
 
+def normalize_request_target(raw: str) -> str:
+    """HTTPSConnection.putrequest() needs path + query only, not an absolute http(s) URL.
+
+    Clients may send ``GET http://127.0.0.1:18081/artifactory/...``; forwarding that full
+    string breaks the origin request line and Google IAP often returns 400 Bad Request.
+    """
+    if not raw:
+        return "/"
+    if raw == "*":
+        return raw
+    if raw.startswith("http://") or raw.startswith("https://"):
+        u = urlparse(raw)
+        path = u.path or "/"
+        return f"{path}?{u.query}" if u.query else path
+    return raw
+
+
 class ForwardHandler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
@@ -85,10 +103,12 @@ class ForwardHandler(BaseHTTPRequestHandler):
         out_headers["Host"] = UPSTREAM
         out_headers["Proxy-Authorization"] = f"Bearer {IAP_JWT}"
 
+        target = normalize_request_target(self.path)
+
         ctx = ssl.create_default_context()
         conn = http.client.HTTPSConnection(UPSTREAM, context=ctx, timeout=UPSTREAM_TIMEOUT)
         try:
-            conn.putrequest(self.command, self.path)
+            conn.putrequest(self.command, target)
             for k, v in out_headers.items():
                 conn.putheader(k, v)
             conn.endheaders()
