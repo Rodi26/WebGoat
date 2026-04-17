@@ -25,6 +25,7 @@ fi
 
 if [ -n "${JF_CLI}" ]; then
   echo "JF_IAP_PROXY_MODE=false" >> "${GITHUB_ENV}"
+  echo "JF_REGISTRY_HOST=${JF_CLI}" >> "${GITHUB_ENV}"
   if [ "${WITH_DOCKER}" = "true" ]; then
     echo "Using JF_HOST_CLI for jf/Docker (split DNS): ${JF_CLI}"
   else

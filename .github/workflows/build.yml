@@ -268,8 +268,8 @@ jobs:
       JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
       JF_PUBLIC_HOST: ${{ vars.JF_HOST }}
       JF_PUBLIC_URL: ${{ vars.JF_HOST != '' && format('https://{0}/', vars.JF_HOST) || '' }}
-      JF_URL: ${{ vars.JF_HOST_CLI != '' && format('https://{0}/', vars.JF_HOST_CLI) || secrets.JF_URL }}
-      JF_REGISTRY_HOST: ${{ vars.JF_HOST_CLI != '' && vars.JF_HOST_CLI || vars.JF_HOST }}
+      # Ne pas fixer JF_URL / JF_REGISTRY_HOST ici : ils seraient réinjectés à chaque step et
+      # écraseraient GITHUB_ENV (proxy 127.0.0.1 ou split-DNS). Voir steps ci-dessous.
       JF_IAP_PROXY_MODE: "false"
       JF_IAP_PROXY_PORT: "18081"
     strategy:
@@ -278,6 +278,20 @@ jobs:
     steps:
       - name: checkout Git repository
         uses: actions/checkout@v4
+      - name: JF_URL and registry host (direct Artifactory, no IAP step)
+        if: ${{ vars.IAP_USE_WIF != 'true' }}
+        env:
+          JF_URL_SECRET: ${{ secrets.JF_URL }}
+          JF_HOST_VAR: ${{ vars.JF_HOST }}
+          JF_HOST_CLI_VAR: ${{ vars.JF_HOST_CLI }}
+        run: |
+          set -euo pipefail
+          echo "JF_URL=${JF_URL_SECRET}" >> "${GITHUB_ENV}"
+          if [ -n "${JF_HOST_CLI_VAR}" ]; then
+            echo "JF_REGISTRY_HOST=${JF_HOST_CLI_VAR}" >> "${GITHUB_ENV}"
+          else
+            echo "JF_REGISTRY_HOST=${JF_HOST_VAR}" >> "${GITHUB_ENV}"
+          fi
       - name: JFrog IAP setup (WIF + local proxy)
         if: ${{ vars.IAP_USE_WIF == 'true' }}
         uses: ./.github/actions/jfrog-iap-setup
@@ -374,20 +388,28 @@ jobs:
           fi
           export DOCKER_USERNAME="$U"
           python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
+      # Référence d'image : host = JF_REGISTRY_HOST (127.0.0.1:port derrière le proxy IAP, pas artifactory.rodolphef.org).
       - name: Build container image
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
+          set -euo pipefail
+          IMG="${JF_REGISTRY_HOST}/${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+          echo "Docker image: ${IMG}"
+          jf docker build -t "${IMG}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
-        run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+        run: |
+          IMG="${JF_REGISTRY_HOST}/${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+          jf docker scan "${IMG}"
       - name: Push container image and publish to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
+          set -euo pipefail
+          IMG="${JF_REGISTRY_HOST}/${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+          jf docker push "${IMG}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
           echo "=== Build info dry-run (diagnostic; remove once Docker module is confirmed) ==="
           jf rt bp --project "${{ vars.JFROG_PROJECT }}" --dry-run 2>&1 || true
           jf rt bce --project "${{ vars.JFROG_PROJECT }}"
