@@ -45,3 +45,14 @@ artifactory_OIDC_AUDIENCE="rodolphef-audience-webgoat"
 artifactory_OIDC_IDENTITY_MAPPING="rodolphef-mapping-webgoat"
 artifactory_DOCKER_DEV_REPO="soleng-oci-dev-virtual"
 artifactory_jfrog_url="https://artifactory.rodolphef.org"
+
+# --- IAP / WIF (environnement GitHub "artifactory" uniquement) — valeurs alignées sur
+#     ejs-frog-demo/terraform/github-actions-variables/terraform.tfvars
+# Secrets GitHub : WORKLOAD_IDENTITY_PROVIDER, GCP_WIF_SERVICE_ACCOUNT, JF_ACCESS_TOKEN
+# Sorties GCP : terraform -chdir=terraform/gcp-wif-github output
+artifactory_IAP_USE_WIF           = "true"
+artifactory_GCP_PROJECT_ID        = "soleng-dev"
+artifactory_JF_HOST               = "artifactory.rodolphef.org"
+artifactory_IAP_OAUTH_CLIENT_ID   = "429932512068-915avkh066l3prngbj8h8or41s9cdjpc.apps.googleusercontent.com"
+artifactory_JF_DOCKER_USERNAME    = "admin"
+# artifactory_JF_HOST_CLI = ""

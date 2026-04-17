@@ -44,10 +44,10 @@ variable "github_repository" {
   type        = string
   description = "GitHub repository name"
   default     = ""
-} 
+}
 
 variable "jfrog_url" {
-  type = string
+  type    = string
   default = "http://localhost:8081"
 }
 
@@ -225,4 +225,41 @@ variable "artifactory_jfrog_url" {
   default = ""
 }
 
+# --- IAP / WIF (environnement GitHub "artifactory" uniquement) — voir iap_artifactory_github_env.tf
+
+variable "artifactory_IAP_USE_WIF" {
+  type        = string
+  description = "Variable GitHub IAP_USE_WIF pour l'environnement artifactory (ex. \"true\")."
+  default     = "true"
+}
+
+variable "artifactory_GCP_PROJECT_ID" {
+  type        = string
+  description = "Variable GitHub GCP_PROJECT_ID — même project_id que le module terraform/gcp-wif-github si vous réutilisez ce WIF."
+  default     = ""
+}
+
+variable "artifactory_JF_HOST" {
+  type        = string
+  description = "Hostname public Artifactory derrière IAP, sans https:// (ex. artifactory.example.org). Variable GitHub JF_HOST."
+  default     = ""
+}
+
+variable "artifactory_IAP_OAUTH_CLIENT_ID" {
+  type        = string
+  description = "Client OAuth IAP (*.apps.googleusercontent.com). Variable GitHub IAP_OAUTH_CLIENT_ID."
+  default     = ""
+}
+
+variable "artifactory_JF_HOST_CLI" {
+  type        = string
+  description = "Optionnel — second hostname pour jf (split-DNS). Si vide, la variable JF_HOST_CLI n'est pas créée."
+  default     = ""
+}
+
+variable "artifactory_JF_DOCKER_USERNAME" {
+  type        = string
+  description = "Optionnel — utilisateur Artifactory pour Docker Basic auth via proxy IAP. Si vide, JF_DOCKER_USERNAME n'est pas créée."
+  default     = ""
+}
 

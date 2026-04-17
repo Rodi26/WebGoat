@@ -14,11 +14,11 @@ terraform {
     }
   }
   backend "remote" {
-      hostname = "rodolphefplus.jfrog.io"
-      organization = "soleng-terraformbe-dev-local"
-      workspaces {
-          name = "default"
-      }
+    hostname     = "rodolphefplus.jfrog.io"
+    organization = "soleng-terraformbe-dev-local"
+    workspaces {
+      name = "default"
+    }
   }
 }
 
@@ -26,7 +26,7 @@ terraform {
 provider "github" {}
 
 provider "platform" {
-  url = "${var.jfrog_url}"
+  url = var.jfrog_url
   // supply JFROG_ACCESS_TOKEN as env var
 }
 

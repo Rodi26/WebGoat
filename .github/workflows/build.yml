@@ -29,6 +29,7 @@ jobs:
       BUILD_NUMBER: ${{ github.run_number }}
       JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
       JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
+      JF_URL: ${{ secrets.JF_URL }}
     strategy:
       matrix:
         java: [ '21']
@@ -50,8 +51,42 @@ jobs:
         with:
           version: 2.92.0
         env:
-          JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Verify JFrog connection (IAP / split-DNS / direct)
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_HAVE_CLI_HOST: ${{ vars.JF_HOST_CLI != '' }}
+        run: |
+          set -euo pipefail
+          echo "JF_PUBLIC_HOST / JF_PUBLIC_URL (IAP): ${JF_PUBLIC_HOST:-} → ${JF_PUBLIC_URL:-}"
+          echo "JF_REGISTRY_HOST / JF_URL (jf + Docker): ${JF_REGISTRY_HOST:-} → ${JF_URL}"
+          echo "JF_IAP_PROXY_MODE=${JF_IAP_PROXY_MODE:-false}"
+          if [ -n "${IAP_GOOGLE_JWT:-}" ]; then
+            echo "--- IAP: curl two-header test on JF_PUBLIC_URL ---"
+            code_ping=$(curl -sS -o /dev/null -w "%{http_code}" \
+              -H "Proxy-Authorization: Bearer ${IAP_GOOGLE_JWT}" \
+              -H "Authorization: Bearer ${JF_ACCESS_TOKEN}" \
+              "${JF_PUBLIC_URL}artifactory/api/system/ping" || echo "000")
+            echo "ping HTTP ${code_ping}"
+            if [ "${JF_IAP_PROXY_MODE:-false}" = "true" ]; then
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            elif [ "${JF_HAVE_CLI_HOST}" = "true" ]; then
+              if [ "${JF_REGISTRY_HOST}" = "${JF_PUBLIC_HOST}" ]; then
+                echo "::error::JF_HOST_CLI must not equal JF_HOST."
+                exit 1
+              fi
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            else
+              echo "::error::IAP enabled but neither local proxy nor JF_HOST_CLI is active. See ejs-frog-demo docs/github-actions-jfrog-iap.md"
+              exit 1
+            fi
+          else
+            echo "--- jf rt ping (no IAP WIF) ---"
+            jf rt ping
+            jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+          fi
       - name: Config JFrog CLI for Maven
         run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
       - name: Verify Maven setup
@@ -66,6 +101,24 @@ jobs:
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Authenticate Docker for IAP proxy
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${JF_IAP_PROXY_MODE:-false}" != "true" ]; then
+            exit 0
+          fi
+          U="${{ vars.JF_DOCKER_USERNAME }}"
+          if [ -z "${U}" ]; then
+            U=$(jf rt curl -sS "/artifactory/api/security/user" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('name') or d.get('email') or '')")
+          fi
+          if [ -z "${U}" ]; then
+            echo "::error::Set Actions variable JF_DOCKER_USERNAME (Artifactory user), or ensure the token can call GET /artifactory/api/security/user."
+            exit 1
+          fi
+          export DOCKER_USERNAME="$U"
+          python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
       - name: Build container image
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
@@ -94,6 +147,7 @@ jobs:
       BUILD_NUMBER: ${{ github.run_number }}
       JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
       JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
+      JF_URL: ${{ secrets.JF_URL }}
     strategy:
       matrix:
         java: [ '21']
@@ -115,8 +169,42 @@ jobs:
         with:
           version: 2.92.0
         env:
-          JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Verify JFrog connection (IAP / split-DNS / direct)
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_HAVE_CLI_HOST: ${{ vars.JF_HOST_CLI != '' }}
+        run: |
+          set -euo pipefail
+          echo "JF_PUBLIC_HOST / JF_PUBLIC_URL (IAP): ${JF_PUBLIC_HOST:-} → ${JF_PUBLIC_URL:-}"
+          echo "JF_REGISTRY_HOST / JF_URL (jf + Docker): ${JF_REGISTRY_HOST:-} → ${JF_URL}"
+          echo "JF_IAP_PROXY_MODE=${JF_IAP_PROXY_MODE:-false}"
+          if [ -n "${IAP_GOOGLE_JWT:-}" ]; then
+            echo "--- IAP: curl two-header test on JF_PUBLIC_URL ---"
+            code_ping=$(curl -sS -o /dev/null -w "%{http_code}" \
+              -H "Proxy-Authorization: Bearer ${IAP_GOOGLE_JWT}" \
+              -H "Authorization: Bearer ${JF_ACCESS_TOKEN}" \
+              "${JF_PUBLIC_URL}artifactory/api/system/ping" || echo "000")
+            echo "ping HTTP ${code_ping}"
+            if [ "${JF_IAP_PROXY_MODE:-false}" = "true" ]; then
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            elif [ "${JF_HAVE_CLI_HOST}" = "true" ]; then
+              if [ "${JF_REGISTRY_HOST}" = "${JF_PUBLIC_HOST}" ]; then
+                echo "::error::JF_HOST_CLI must not equal JF_HOST."
+                exit 1
+              fi
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            else
+              echo "::error::IAP enabled but neither local proxy nor JF_HOST_CLI is active. See ejs-frog-demo docs/github-actions-jfrog-iap.md"
+              exit 1
+            fi
+          else
+            echo "--- jf rt ping (no IAP WIF) ---"
+            jf rt ping
+            jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+          fi
       - name: Config JFrog CLI for Maven
         run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
       - name: Verify Maven setup
@@ -131,6 +219,24 @@ jobs:
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Authenticate Docker for IAP proxy
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${JF_IAP_PROXY_MODE:-false}" != "true" ]; then
+            exit 0
+          fi
+          U="${{ vars.JF_DOCKER_USERNAME }}"
+          if [ -z "${U}" ]; then
+            U=$(jf rt curl -sS "/artifactory/api/security/user" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('name') or d.get('email') or '')")
+          fi
+          if [ -z "${U}" ]; then
+            echo "::error::Set Actions variable JF_DOCKER_USERNAME (Artifactory user), or ensure the token can call GET /artifactory/api/security/user."
+            exit 1
+          fi
+          export DOCKER_USERNAME="$U"
+          python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
       - name: Build container image
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
@@ -150,6 +256,7 @@ jobs:
           jf rt bce --project "${{ vars.JFROG_PROJECT }}"
           jf rt bag --project "${{ vars.JFROG_PROJECT }}"
           jf rt bp --project "${{ vars.JFROG_PROJECT }}"
+  # Google IAP (WIF + local proxy) applies only to this environment; solenglatest and myjfrog use direct JF_URL.
   deploy-artifactory:
     name: Build and Deploy to artifactory
     runs-on: ubuntu-latest
@@ -159,12 +266,31 @@ jobs:
       BUILD_NUMBER: ${{ github.run_number }}
       JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
       JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
+      JF_PUBLIC_HOST: ${{ vars.JF_HOST }}
+      JF_PUBLIC_URL: ${{ vars.JF_HOST != '' && format('https://{0}/', vars.JF_HOST) || '' }}
+      JF_URL: ${{ vars.JF_HOST_CLI != '' && format('https://{0}/', vars.JF_HOST_CLI) || secrets.JF_URL }}
+      JF_REGISTRY_HOST: ${{ vars.JF_HOST_CLI != '' && vars.JF_HOST_CLI || vars.JF_HOST }}
+      JF_IAP_PROXY_MODE: "false"
+      JF_IAP_PROXY_PORT: "18081"
     strategy:
       matrix:
         java: [ '21']
     steps:
       - name: checkout Git repository
         uses: actions/checkout@v4
+      - name: JFrog IAP setup (WIF + local proxy)
+        if: ${{ vars.IAP_USE_WIF == 'true' }}
+        uses: ./.github/actions/jfrog-iap-setup
+        with:
+          iap_enabled: ${{ vars.IAP_USE_WIF }}
+          gcp_project_id: ${{ vars.GCP_PROJECT_ID }}
+          iap_oauth_client_id: ${{ vars.IAP_OAUTH_CLIENT_ID }}
+          jf_host: ${{ vars.JF_HOST }}
+          jf_host_cli: ${{ vars.JF_HOST_CLI }}
+          proxy_port: "18081"
+          with_docker: "true"
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_wif_service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
       - name: Set up JDK ${{matrix.java}}
         uses: actions/setup-java@v4
         with:
@@ -180,8 +306,42 @@ jobs:
         with:
           version: 2.92.0
         env:
-          JF_URL: ${{ secrets.JF_URL }}
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Verify JFrog connection (IAP / split-DNS / direct)
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_HAVE_CLI_HOST: ${{ vars.JF_HOST_CLI != '' }}
+        run: |
+          set -euo pipefail
+          echo "JF_PUBLIC_HOST / JF_PUBLIC_URL (IAP): ${JF_PUBLIC_HOST:-} → ${JF_PUBLIC_URL:-}"
+          echo "JF_REGISTRY_HOST / JF_URL (jf + Docker): ${JF_REGISTRY_HOST:-} → ${JF_URL}"
+          echo "JF_IAP_PROXY_MODE=${JF_IAP_PROXY_MODE:-false}"
+          if [ -n "${IAP_GOOGLE_JWT:-}" ]; then
+            echo "--- IAP: curl two-header test on JF_PUBLIC_URL ---"
+            code_ping=$(curl -sS -o /dev/null -w "%{http_code}" \
+              -H "Proxy-Authorization: Bearer ${IAP_GOOGLE_JWT}" \
+              -H "Authorization: Bearer ${JF_ACCESS_TOKEN}" \
+              "${JF_PUBLIC_URL}artifactory/api/system/ping" || echo "000")
+            echo "ping HTTP ${code_ping}"
+            if [ "${JF_IAP_PROXY_MODE:-false}" = "true" ]; then
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            elif [ "${JF_HAVE_CLI_HOST}" = "true" ]; then
+              if [ "${JF_REGISTRY_HOST}" = "${JF_PUBLIC_HOST}" ]; then
+                echo "::error::JF_HOST_CLI must not equal JF_HOST."
+                exit 1
+              fi
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            else
+              echo "::error::IAP enabled but neither local proxy nor JF_HOST_CLI is active. See ejs-frog-demo docs/github-actions-jfrog-iap.md"
+              exit 1
+            fi
+          else
+            echo "--- jf rt ping (no IAP WIF) ---"
+            jf rt ping
+            jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+          fi
       - name: Config JFrog CLI for Maven
         run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
       - name: Verify Maven setup
@@ -196,6 +356,24 @@ jobs:
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Authenticate Docker for IAP proxy
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${JF_IAP_PROXY_MODE:-false}" != "true" ]; then
+            exit 0
+          fi
+          U="${{ vars.JF_DOCKER_USERNAME }}"
+          if [ -z "${U}" ]; then
+            U=$(jf rt curl -sS "/artifactory/api/security/user" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('name') or d.get('email') or '')")
+          fi
+          if [ -z "${U}" ]; then
+            echo "::error::Set Actions variable JF_DOCKER_USERNAME (Artifactory user), or ensure the token can call GET /artifactory/api/security/user."
+            exit 1
+          fi
+          export DOCKER_USERNAME="$U"
+          python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
       - name: Build container image
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}

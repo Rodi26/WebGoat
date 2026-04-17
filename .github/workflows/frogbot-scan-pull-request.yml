@@ -1,42 +1,38 @@
 name: "Frogbot Scan Pull Request"
 on:
   pull_request_target:
-    types: [opened,   ]
+    types: [opened, synchronize]
 permissions:
   pull-requests: write
   contents: read
-  # [Mandatory If using OIDC authentication protocol instead of JF_ACCESS_TOKEN]
-  # id-token: write
+  security-events: write
+  id-token: write
 jobs:
   scan-pull-request:
     runs-on: ubuntu-latest
-    # A pull request needs to be approved before Frogbot scans it. Any GitHub user who is associated with the
-    # "frogbot" GitHub environment can approve the pull request to be scanned.
     environment: frogbot
+    env:
+      JF_URL: ${{ vars.JF_HOST_CLI != '' && format('https://{0}/', vars.JF_HOST_CLI) || secrets.JF_URL }}
+      JF_PUBLIC_HOST: ${{ vars.JF_HOST }}
+      JF_PUBLIC_URL: ${{ vars.JF_HOST != '' && format('https://{0}/', vars.JF_HOST) || '' }}
+      JF_IAP_PROXY_PORT: "18081"
     steps:
+      - uses: actions/checkout@v4
+      # Use only when Frogbot targets the artifactory (IAP) instance; set IAP_USE_WIF in this environment.
+      - name: JFrog IAP setup (WIF + local proxy, API only)
+        if: ${{ vars.IAP_USE_WIF == 'true' }}
+        uses: ./.github/actions/jfrog-iap-setup
+        with:
+          iap_enabled: ${{ vars.IAP_USE_WIF }}
+          gcp_project_id: ${{ vars.GCP_PROJECT_ID }}
+          iap_oauth_client_id: ${{ vars.IAP_OAUTH_CLIENT_ID }}
+          jf_host: ${{ vars.JF_HOST }}
+          jf_host_cli: ${{ vars.JF_HOST_CLI }}
+          proxy_port: "18081"
+          with_docker: "false"
+          workload_identity_provider: ${{ secrets.WORKLOAD_IDENTITY_PROVIDER }}
+          gcp_wif_service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
       - uses: jfrog/frogbot@v2
         env:
-          # [Mandatory]
-          # JFrog platform URL
-          JF_URL: ${{ secrets.JF_URL }}
-
-          # [Mandatory if JF_USER and JF_PASSWORD are not provided]
-          # JFrog access token with 'read' permissions on Xray service
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-
-          # [Mandatory if JF_ACCESS_TOKEN is not provided]
-          # JFrog username with 'read' permissions for Xray. Must be provided with JF_PASSWORD
-          # JF_USER: ${{ secrets.JF_USER }}
-
-          # [Mandatory if JF_ACCESS_TOKEN is not provided]
-          # JFrog password. Must be provided with JF_USER
-          # JF_PASSWORD: ${{ secrets.JF_PASSWORD }}
-
-          # [Mandatory]
-          # The GitHub token is automatically generated for the job
           JF_GIT_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
-        # [Mandatory if using OIDC authentication protocol instead of JF_ACCESS_TOKEN]
-        # Insert to oidc-provider-name the 'Provider Name' defined in the OIDC integration configured in the JPD
-        # with:
-        #   oidc-provider-name: ""
