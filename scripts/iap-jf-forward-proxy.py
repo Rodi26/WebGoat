@@ -3,8 +3,8 @@
 Local HTTP forward proxy for GitHub Actions: adds Google IAP OIDC to Proxy-Authorization
 so JFrog can keep Authorization: Bearer <platform token>.
 
-Request and response bodies are streamed (no full buffering) so Docker layer push/pull
-does not OOM the runner or hit artificial limits — fixes "broken pipe" on large uploads.
+Uses HTTPSConnection.request() with Host + Proxy-Authorization in headers — Python's
+http.client then sets skip_host automatically (see HTTPConnection._send_request).
 
 See: https://cloud.google.com/iap/docs/authentication-howto#authenticating_from_proxy-authorization_header
 
@@ -12,6 +12,7 @@ Environment:
   JF_UPSTREAM_HOST  — Artifactory hostname only (e.g. artifactory.example.org)
   IAP_GOOGLE_JWT    — OIDC ID token (audience = IAP OAuth client ID)
   JF_IAP_PROXY_BIND — host:port to listen (default 127.0.0.1:18081)
+  JF_IAP_PROXY_UPSTREAM_TIMEOUT — seconds for upstream TLS socket (default 3600)
 """
 from __future__ import annotations
 
@@ -26,10 +27,7 @@ from urllib.parse import urlparse
 UPSTREAM = os.environ.get("JF_UPSTREAM_HOST", "").strip()
 IAP_JWT = os.environ.get("IAP_GOOGLE_JWT", "").strip()
 BIND = os.environ.get("JF_IAP_PROXY_BIND", "127.0.0.1:18081").strip()
-
-# Large uploads (Docker layers) can exceed 10+ minutes behind IAP.
 UPSTREAM_TIMEOUT = int(os.environ.get("JF_IAP_PROXY_UPSTREAM_TIMEOUT", "3600"))
-READ_CHUNK = 64 * 1024
 
 if not UPSTREAM or not IAP_JWT:
     print("iap-jf-forward-proxy: need JF_UPSTREAM_HOST and IAP_GOOGLE_JWT", file=sys.stderr)
@@ -64,10 +62,10 @@ def _hop_by_hop() -> set[str]:
 
 
 def normalize_request_target(raw: str) -> str:
-    """HTTPSConnection.putrequest() needs path + query only, not an absolute http(s) URL.
+    """Path + query only for the upstream request line (not an absolute http(s) URL).
 
-    Clients may send ``GET http://127.0.0.1:18081/artifactory/...``; forwarding that full
-    string breaks the origin request line and Google IAP often returns 400 Bad Request.
+    Some clients send ``GET http://127.0.0.1:18081/artifactory/...``; forwarding that
+    as the request-target can break the origin request line.
     """
     if not raw:
         return "/"
@@ -87,12 +85,8 @@ class ForwardHandler(BaseHTTPRequestHandler):
         print(f"[iap-jf-forward-proxy] {self.address_string()} - {fmt % args}", file=sys.stderr)
 
     def _forward(self) -> None:
-        clen_hdr = self.headers.get("Content-Length")
-        try:
-            clen = int(clen_hdr) if clen_hdr else 0
-        except ValueError:
-            clen = 0
-        te = (self.headers.get("Transfer-Encoding") or "").lower()
+        clen = int(self.headers.get("Content-Length", 0))
+        body = self.rfile.read(clen) if clen > 0 else None
 
         out_headers: Dict[str, str] = {}
         for k, v in self.headers.items():
@@ -103,50 +97,27 @@ class ForwardHandler(BaseHTTPRequestHandler):
         out_headers["Host"] = UPSTREAM
         out_headers["Proxy-Authorization"] = f"Bearer {IAP_JWT}"
 
-        target = normalize_request_target(self.path)
+        path = normalize_request_target(self.path)
 
         ctx = ssl.create_default_context()
         conn = http.client.HTTPSConnection(UPSTREAM, context=ctx, timeout=UPSTREAM_TIMEOUT)
         try:
-            conn.putrequest(self.command, target)
-            for k, v in out_headers.items():
-                conn.putheader(k, v)
-            conn.endheaders()
-
-            if clen > 0:
-                remaining = clen
-                while remaining > 0:
-                    n = min(READ_CHUNK, remaining)
-                    chunk = self.rfile.read(n)
-                    if not chunk:
-                        break
-                    conn.send(chunk)
-                    remaining -= len(chunk)
-            elif "chunked" in te:
-                print(
-                    "[iap-jf-forward-proxy] chunked request body not supported; use Content-Length",
-                    file=sys.stderr,
-                )
-                self.send_error(411, "Length Required")
-                return
-
+            conn.request(self.command, path, body=body, headers=out_headers)
             resp = conn.getresponse()
-
+            # Same as ejs-frog-demo: buffer response so we emit a single Content-Length.
+            # (Streaming without fixing TE/CL confuses some registry clients.)
+            payload = resp.read()
             self.send_response(resp.status)
-            hop = _hop_by_hop()
             for hk, hv in resp.getheaders():
-                if hk.lower() in hop:
+                if hk.lower() in _hop_by_hop():
                     continue
                 if hk.lower() in _HEADERS_REWRITE_UPSTREAM_URLS:
                     hv = _rewrite_upstream_absolute_urls(hv)
                 self.send_header(hk, hv)
+            self.send_header("Content-Length", str(len(payload)))
             self.end_headers()
-
-            while True:
-                chunk = resp.read(READ_CHUNK)
-                if not chunk:
-                    break
-                self.wfile.write(chunk)
+            if payload:
+                self.wfile.write(payload)
         finally:
             conn.close()
 
@@ -178,7 +149,7 @@ def main() -> None:
     server = ThreadingHTTPServer((host, port), ForwardHandler)
     print(
         f"iap-jf-forward-proxy: listening on http://{host}:{port} → https://{UPSTREAM}/ "
-        f"(streamed I/O, upstream_timeout={UPSTREAM_TIMEOUT}s)",
+        f"(upstream_timeout={UPSTREAM_TIMEOUT}s)",
         flush=True,
     )
     server.serve_forever()
