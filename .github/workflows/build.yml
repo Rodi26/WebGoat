@@ -46,123 +46,12 @@ jobs:
           echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
           echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
 
-      - name: Setup JFrog CLI
-        uses: jfrog/setup-jfrog-cli@v4
-        with:
-          version: 2.92.0
+      # DOCKER_DEV_REPO = clé du repo Docker seulement (ex. rodolphef-oci-dev-virtual). Host = JF_URL / JFROG_URL (voir scripts/compute-docker-image-ref.py).
+      - name: Docker image reference (host from JF_URL)
         env:
-          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-      - name: Verify JFrog connection (IAP / split-DNS / direct)
-        env:
-          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-          JF_HAVE_CLI_HOST: ${{ vars.JF_HOST_CLI != '' }}
-        run: |
-          set -euo pipefail
-          echo "JF_PUBLIC_HOST / JF_PUBLIC_URL (IAP): ${JF_PUBLIC_HOST:-} → ${JF_PUBLIC_URL:-}"
-          echo "JF_REGISTRY_HOST / JF_URL (jf + Docker): ${JF_REGISTRY_HOST:-} → ${JF_URL}"
-          echo "JF_IAP_PROXY_MODE=${JF_IAP_PROXY_MODE:-false}"
-          if [ -n "${IAP_GOOGLE_JWT:-}" ]; then
-            echo "--- IAP: curl two-header test on JF_PUBLIC_URL ---"
-            code_ping=$(curl -sS -o /dev/null -w "%{http_code}" \
-              -H "Proxy-Authorization: Bearer ${IAP_GOOGLE_JWT}" \
-              -H "Authorization: Bearer ${JF_ACCESS_TOKEN}" \
-              "${JF_PUBLIC_URL}artifactory/api/system/ping" || echo "000")
-            echo "ping HTTP ${code_ping}"
-            if [ "${JF_IAP_PROXY_MODE:-false}" = "true" ]; then
-              jf rt ping
-              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
-            elif [ "${JF_HAVE_CLI_HOST}" = "true" ]; then
-              if [ "${JF_REGISTRY_HOST}" = "${JF_PUBLIC_HOST}" ]; then
-                echo "::error::JF_HOST_CLI must not equal JF_HOST."
-                exit 1
-              fi
-              jf rt ping
-              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
-            else
-              echo "::error::IAP enabled but neither local proxy nor JF_HOST_CLI is active. See ejs-frog-demo docs/github-actions-jfrog-iap.md"
-              exit 1
-            fi
-          else
-            echo "--- jf rt ping (no IAP WIF) ---"
-            jf rt ping
-            jf rt curl -sS "/artifactory/api/repositories" -o repos.json
-          fi
-      - name: Config JFrog CLI for Maven
-        run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
-      - name: Verify Maven setup
-        run: mvn -version
-      - name: Build Maven 
-        env:
-          JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
-          BUILD_NAME: ${{ env.BUILD_NAME }}
-          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
-      - name: Run a source code audit
-        run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
-      - name: Scan jar file locally with JFrog Xray
-        run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
-      - name: Authenticate Docker for IAP proxy
-        env:
-          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
-        run: |
-          set -euo pipefail
-          if [ "${JF_IAP_PROXY_MODE:-false}" != "true" ]; then
-            exit 0
-          fi
-          U="${{ vars.JF_DOCKER_USERNAME }}"
-          if [ -z "${U}" ]; then
-            U=$(jf rt curl -sS "/artifactory/api/security/user" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('name') or d.get('email') or '')")
-          fi
-          if [ -z "${U}" ]; then
-            echo "::error::Set Actions variable JF_DOCKER_USERNAME (Artifactory user), or ensure the token can call GET /artifactory/api/security/user."
-            exit 1
-          fi
-          export DOCKER_USERNAME="$U"
-          python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
-      - name: Build container image
-        env:
-          BUILD_NAME: ${{ env.BUILD_NAME }}
-          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: |
-          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
-      - name: Scan docker image locally with JFrog Xray
-        run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
-      - name: Push container image and publish to JFrog Artifactory
-        env:
-          BUILD_NAME: ${{ env.BUILD_NAME }}
-          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
-        run: |
-          jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
-          echo "=== Build info dry-run (diagnostic; remove once Docker module is confirmed) ==="
-          jf rt bp --project "${{ vars.JFROG_PROJECT }}" --dry-run 2>&1 || true
-          jf rt bce --project "${{ vars.JFROG_PROJECT }}"
-          jf rt bag --project "${{ vars.JFROG_PROJECT }}"
-          jf rt bp --project "${{ vars.JFROG_PROJECT }}"
-  deploy-myjfrog:
-    name: Build and Deploy to myjfrog
-    runs-on: ubuntu-latest
-    environment: myjfrog
-    env:
-      BUILD_NAME: WebGoat_build_with_Maven
-      BUILD_NUMBER: ${{ github.run_number }}
-      JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
-      JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
-      JF_URL: ${{ secrets.JF_URL }}
-    strategy:
-      matrix:
-        java: [ '21']
-    steps:
-      - name: checkout Git repository
-        uses: actions/checkout@v4
-      - name: Set up JDK ${{matrix.java}}
-        uses: actions/setup-java@v4
-        with:
-          java-version: ${{matrix.java}}
-          distribution: 'adopt'
-      - name: Extracting the artifact name and version 2 from POM file
-        run: |
-          echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          DOCKER_REPO: ${{ vars.DOCKER_DEV_REPO }}
+          JFROG_URL_FALLBACK: ${{ vars.JFROG_URL }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/compute-docker-image-ref.py"
 
       - name: Setup JFrog CLI
         uses: jfrog/setup-jfrog-cli@v4
@@ -242,15 +131,139 @@ jobs:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker build -t "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
+          jf docker build -t "${DOCKER_IMAGE_REF}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
-        run: jf docker scan "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
+        run: jf docker scan "${DOCKER_IMAGE_REF}"
       - name: Push container image and publish to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
-          jf docker push "${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
+          jf docker push "${DOCKER_IMAGE_REF}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
+          echo "=== Build info dry-run (diagnostic; remove once Docker module is confirmed) ==="
+          jf rt bp --project "${{ vars.JFROG_PROJECT }}" --dry-run 2>&1 || true
+          jf rt bce --project "${{ vars.JFROG_PROJECT }}"
+          jf rt bag --project "${{ vars.JFROG_PROJECT }}"
+          jf rt bp --project "${{ vars.JFROG_PROJECT }}"
+  deploy-myjfrog:
+    name: Build and Deploy to myjfrog
+    runs-on: ubuntu-latest
+    environment: myjfrog
+    env:
+      BUILD_NAME: WebGoat_build_with_Maven
+      BUILD_NUMBER: ${{ github.run_number }}
+      JFROG_CLI_BUILD_NAME: WebGoat_build_with_Maven
+      JFROG_CLI_BUILD_NUMBER: ${{ github.run_number }}
+      JF_URL: ${{ secrets.JF_URL }}
+    strategy:
+      matrix:
+        java: [ '21']
+    steps:
+      - name: checkout Git repository
+        uses: actions/checkout@v4
+      - name: Set up JDK ${{matrix.java}}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{matrix.java}}
+          distribution: 'adopt'
+      - name: Extracting the artifact name and version 2 from POM file
+        run: |
+          echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
+          echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+
+      - name: Docker image reference (host from JF_URL)
+        env:
+          DOCKER_REPO: ${{ vars.DOCKER_DEV_REPO }}
+          JFROG_URL_FALLBACK: ${{ vars.JFROG_URL }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/compute-docker-image-ref.py"
+
+      - name: Setup JFrog CLI
+        uses: jfrog/setup-jfrog-cli@v4
+        with:
+          version: 2.92.0
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+      - name: Verify JFrog connection (IAP / split-DNS / direct)
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+          JF_HAVE_CLI_HOST: ${{ vars.JF_HOST_CLI != '' }}
+        run: |
+          set -euo pipefail
+          echo "JF_PUBLIC_HOST / JF_PUBLIC_URL (IAP): ${JF_PUBLIC_HOST:-} → ${JF_PUBLIC_URL:-}"
+          echo "JF_REGISTRY_HOST / JF_URL (jf + Docker): ${JF_REGISTRY_HOST:-} → ${JF_URL}"
+          echo "JF_IAP_PROXY_MODE=${JF_IAP_PROXY_MODE:-false}"
+          if [ -n "${IAP_GOOGLE_JWT:-}" ]; then
+            echo "--- IAP: curl two-header test on JF_PUBLIC_URL ---"
+            code_ping=$(curl -sS -o /dev/null -w "%{http_code}" \
+              -H "Proxy-Authorization: Bearer ${IAP_GOOGLE_JWT}" \
+              -H "Authorization: Bearer ${JF_ACCESS_TOKEN}" \
+              "${JF_PUBLIC_URL}artifactory/api/system/ping" || echo "000")
+            echo "ping HTTP ${code_ping}"
+            if [ "${JF_IAP_PROXY_MODE:-false}" = "true" ]; then
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            elif [ "${JF_HAVE_CLI_HOST}" = "true" ]; then
+              if [ "${JF_REGISTRY_HOST}" = "${JF_PUBLIC_HOST}" ]; then
+                echo "::error::JF_HOST_CLI must not equal JF_HOST."
+                exit 1
+              fi
+              jf rt ping
+              jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+            else
+              echo "::error::IAP enabled but neither local proxy nor JF_HOST_CLI is active. See ejs-frog-demo docs/github-actions-jfrog-iap.md"
+              exit 1
+            fi
+          else
+            echo "--- jf rt ping (no IAP WIF) ---"
+            jf rt ping
+            jf rt curl -sS "/artifactory/api/repositories" -o repos.json
+          fi
+      - name: Config JFrog CLI for Maven
+        run: jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+      - name: Verify Maven setup
+        run: mvn -version
+      - name: Build Maven 
+        env:
+          JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: jf mvn clean install -B -e -DskipTests --project "${{ vars.JFROG_PROJECT }}"
+      - name: Run a source code audit
+        run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
+      - name: Scan jar file locally with JFrog Xray
+        run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Authenticate Docker for IAP proxy
+        env:
+          JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${JF_IAP_PROXY_MODE:-false}" != "true" ]; then
+            exit 0
+          fi
+          U="${{ vars.JF_DOCKER_USERNAME }}"
+          if [ -z "${U}" ]; then
+            U=$(jf rt curl -sS "/artifactory/api/security/user" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('name') or d.get('email') or '')")
+          fi
+          if [ -z "${U}" ]; then
+            echo "::error::Set Actions variable JF_DOCKER_USERNAME (Artifactory user), or ensure the token can call GET /artifactory/api/security/user."
+            exit 1
+          fi
+          export DOCKER_USERNAME="$U"
+          python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
+      - name: Build container image
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: |
+          jf docker build -t "${DOCKER_IMAGE_REF}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
+      - name: Scan docker image locally with JFrog Xray
+        run: jf docker scan "${DOCKER_IMAGE_REF}"
+      - name: Push container image and publish to JFrog Artifactory
+        env:
+          BUILD_NAME: ${{ env.BUILD_NAME }}
+          BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
+        run: |
+          jf docker push "${DOCKER_IMAGE_REF}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
           echo "=== Build info dry-run (diagnostic; remove once Docker module is confirmed) ==="
           jf rt bp --project "${{ vars.JFROG_PROJECT }}" --dry-run 2>&1 || true
           jf rt bce --project "${{ vars.JFROG_PROJECT }}"
@@ -370,6 +383,11 @@ jobs:
         run: jf audit --licenses --format=table --fail=false #--watches License_not_validated 
       - name: Scan jar file locally with JFrog Xray
         run: jf scan "./target/${{ env.ArtifactName }}-${{ env.Version }}.jar" --format=table  #--watches  Security_policy_1
+      - name: Docker image reference (registry host from JF_REGISTRY_HOST or JF_URL)
+        env:
+          DOCKER_REPO: ${{ vars.DOCKER_DEV_REPO }}
+          JFROG_URL_FALLBACK: ${{ vars.JFROG_URL }}
+        run: python3 "${GITHUB_WORKSPACE}/scripts/compute-docker-image-ref.py"
       - name: Authenticate Docker for IAP proxy
         env:
           JF_ACCESS_TOKEN: ${{ secrets.JF_ACCESS_TOKEN }}
@@ -388,28 +406,23 @@ jobs:
           fi
           export DOCKER_USERNAME="$U"
           python3 -c 'import base64,json,os; from pathlib import Path; h=os.environ["JF_REGISTRY_HOST"].strip(); u=os.environ["DOCKER_USERNAME"].strip(); t=os.environ["JF_ACCESS_TOKEN"].strip(); b=base64.b64encode((u+":"+t).encode()).decode(); c={"auths":{h:{"auth":b},"http://"+h:{"auth":b}}}; Path.home().joinpath(".docker").mkdir(parents=True, exist_ok=True); Path.home().joinpath(".docker","config.json").write_text(json.dumps(c), encoding="utf-8"); print("Wrote ~/.docker/config.json with Basic auth for", h)'
-      # Référence d'image : host = JF_REGISTRY_HOST (127.0.0.1:port derrière le proxy IAP, pas artifactory.rodolphef.org).
       - name: Build container image
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           set -euo pipefail
-          IMG="${JF_REGISTRY_HOST}/${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
-          echo "Docker image: ${IMG}"
-          jf docker build -t "${IMG}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
+          echo "Docker image: ${DOCKER_IMAGE_REF}"
+          jf docker build -t "${DOCKER_IMAGE_REF}" --build-arg Artifact=./target/${{ env.ArtifactName }}-${{ env.Version }}.jar --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" .  --project "${{ vars.JFROG_PROJECT }}"
       - name: Scan docker image locally with JFrog Xray
-        run: |
-          IMG="${JF_REGISTRY_HOST}/${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
-          jf docker scan "${IMG}"
+        run: jf docker scan "${DOCKER_IMAGE_REF}"
       - name: Push container image and publish to JFrog Artifactory
         env:
           BUILD_NAME: ${{ env.BUILD_NAME }}
           BUILD_NUMBER: ${{ env.BUILD_NUMBER }}
         run: |
           set -euo pipefail
-          IMG="${JF_REGISTRY_HOST}/${{ vars.DOCKER_DEV_REPO }}/${{ env.ArtifactName }}:${{ env.Version }}"
-          jf docker push "${IMG}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
+          jf docker push "${DOCKER_IMAGE_REF}" --build-name="${{ env.BUILD_NAME }}" --build-number="${{ env.BUILD_NUMBER }}" --project "${{ vars.JFROG_PROJECT }}"
           echo "=== Build info dry-run (diagnostic; remove once Docker module is confirmed) ==="
           jf rt bp --project "${{ vars.JFROG_PROJECT }}" --dry-run 2>&1 || true
           jf rt bce --project "${{ vars.JFROG_PROJECT }}"
