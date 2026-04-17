@@ -1,7 +1,7 @@
 # Variables GitHub Actions pour l'environnement "artifactory" uniquement (IAP + WIF).
 #
-# Secrets (non gérés ici) : WORKLOAD_IDENTITY_PROVIDER, GCP_WIF_SERVICE_ACCOUNT, JF_ACCESS_TOKEN
-# — voir sorties du module terraform/gcp-wif-github/README.md
+# Secrets WIF : gérés dans gcp_wif_github.tf (github_actions_environment_secret).
+# Autres secrets (ex. JF_ACCESS_TOKEN, JF_URL) : hors ce fichier.
 #
 # Fichiers source de référence (ejs-frog-demo) :
 #   terraform/gcp-wif-github/          — pool WIF + SA GCP

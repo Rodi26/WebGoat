@@ -56,3 +56,11 @@ artifactory_JF_HOST               = "artifactory.rodolphef.org"
 artifactory_IAP_OAUTH_CLIENT_ID   = "429932512068-915avkh066l3prngbj8h8or41s9cdjpc.apps.googleusercontent.com"
 artifactory_JF_DOCKER_USERNAME    = "admin"
 # artifactory_JF_HOST_CLI = ""
+
+# WIF — secrets GitHub (terraform apply ré-applique les secrets). Laisser vides si create_gcp_wif_infrastructure = true.
+create_gcp_wif_infrastructure = false
+artifactory_wif_workload_identity_provider = "projects/429932512068/locations/global/workloadIdentityPools/rodolphef-github-actions-pool/providers/rodolphef-github-provider"
+artifactory_wif_service_account_email      = "rodolphef-github-ci-iap@soleng-dev.iam.gserviceaccount.com"
+# gcp_wif_project_id = "soleng-dev"
+# gcp_wif_github_repo_full = "Rodi26/WebGoat"
+# gcp_wif_restrict_to_single_repo = false

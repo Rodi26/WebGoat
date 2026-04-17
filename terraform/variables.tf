@@ -263,3 +263,91 @@ variable "artifactory_JF_DOCKER_USERNAME" {
   default     = ""
 }
 
+# --- WIF : secrets GitHub + création GCP optionnelle (voir gcp_wif_github.tf)
+
+variable "create_gcp_wif_infrastructure" {
+  type        = bool
+  description = "Si true, crée le pool WIF + compte de service dans GCP via modules/gcp-wif-github (nécessite credentials GCP). Sinon, utiliser artifactory_wif_* depuis un apply existant / autre repo."
+  default     = false
+}
+
+variable "artifactory_wif_workload_identity_provider" {
+  type        = string
+  description = "Valeur du secret WORKLOAD_IDENTITY_PROVIDER. Ignorée si create_gcp_wif_infrastructure = true (sortie du module)."
+  default     = ""
+  sensitive   = true
+}
+
+variable "artifactory_wif_service_account_email" {
+  type        = string
+  description = "Valeur du secret GCP_WIF_SERVICE_ACCOUNT. Ignorée si create_gcp_wif_infrastructure = true."
+  default     = ""
+  sensitive   = true
+}
+
+variable "gcp_wif_project_id" {
+  type        = string
+  description = "Projet GCP pour module.gcp_wif_github (si create_gcp_wif_infrastructure = true)."
+  default     = ""
+
+  validation {
+    condition     = !var.create_gcp_wif_infrastructure || trimspace(var.gcp_wif_project_id) != ""
+    error_message = "gcp_wif_project_id est requis lorsque create_gcp_wif_infrastructure vaut true."
+  }
+}
+
+variable "gcp_wif_region" {
+  type        = string
+  description = "Région provider Google (ressources WIF restent globales)."
+  default     = "europe-west1"
+}
+
+variable "gcp_wif_github_org" {
+  type        = string
+  description = "Organisation GitHub pour la condition OIDC du provider WIF."
+  default     = "Rodi26"
+}
+
+variable "gcp_wif_github_repo_full" {
+  type        = string
+  description = "Si restrict_to_single_repo, format ORG/NOM (ex. Rodi26/WebGoat)."
+  default     = ""
+}
+
+variable "gcp_wif_restrict_to_single_repo" {
+  type        = bool
+  description = "Si true, seul github_repo_full peut utiliser WIF ; sinon toute l'org gcp_wif_github_org."
+  default     = false
+}
+
+variable "gcp_wif_pool_id" {
+  type    = string
+  default = "rodolphef-github-actions-pool"
+}
+
+variable "gcp_wif_provider_id" {
+  type    = string
+  default = "rodolphef-github-provider"
+}
+
+variable "gcp_wif_service_account_id" {
+  type    = string
+  default = "rodolphef-github-ci-iap"
+}
+
+variable "gcp_wif_pool_display_name" {
+  type        = string
+  description = "≤ 32 caractères (limite API GCP)."
+  default     = "GitHub Actions WIF"
+
+  validation {
+    condition     = length(var.gcp_wif_pool_display_name) <= 32
+    error_message = "gcp_wif_pool_display_name must be <= 32 characters."
+  }
+}
+
+variable "gcp_wif_service_account_display_name" {
+  type    = string
+  default = "GitHub Actions — WIF + IAP CI"
+}
+

@@ -102,7 +102,7 @@ override.tf.json
 terraform.rc
 terraform/.terraform.lock.hcl
 terraform/.terraform/
-terraform/terraform.tfstate
+terraform/terra-mêmeform.tfstate
 terraform/terraform.tfstate.backup
 terraform/terraform.tfvars
 terraform/gcp-wif-github/.terraform.lock.hcl

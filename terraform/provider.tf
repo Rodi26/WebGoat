@@ -4,6 +4,10 @@ terraform {
       source  = "integrations/github"
       version = "~> 6.0"
     }
+    google = {
+      source  = "hashicorp/google"
+      version = ">= 5.25.0, < 7.0.0"
+    }
     platform = {
       source  = "jfrog/platform"
       version = "2.2.1"
@@ -24,6 +28,11 @@ terraform {
 
 # Configure the GitHub Provider
 provider "github" {}
+
+# Utilisé par module.gcp_wif_github (si create_gcp_wif_infrastructure = true).
+provider "google" {
+  region = var.gcp_wif_region
+}
 
 provider "platform" {
   url = var.jfrog_url
