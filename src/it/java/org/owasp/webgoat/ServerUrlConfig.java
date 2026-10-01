@@ -1,21 +1,44 @@
 package org.owasp.webgoat;
 
-public record ServerUrlConfig(String host, String port, String contextPath) {
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-  public ServerUrlConfig {
-    contextPath = contextPath.replaceAll("/", "");
+@EqualsAndHashCode
+@ToString
+public class ServerUrlConfig {
+
+  private final String host;
+  private final String port;
+  private final String contextPath;
+
+  public ServerUrlConfig(String host, String port, String contextPath) {
+    this.host = host;
+    this.port = port;
+    this.contextPath = contextPath.replaceAll("/", "");
+  }
+
+  public String host() {
+    return host;
+  }
+
+  public String port() {
+    return port;
+  }
+
+  public String contextPath() {
+    return contextPath;
   }
 
   public String getBaseUrl() {
-    return "http://%s:%s".formatted(host, port);
+    return String.format("http://%s:%s", host, port);
   }
 
   public String url(String path) {
-    return "%s/%s".formatted(getFullUrl(), path);
+    return String.format("%s/%s", getFullUrl(), path);
   }
 
   private String getFullUrl() {
-    return "http://%s:%s/%s".formatted(host, port, contextPath);
+    return String.format("http://%s:%s/%s", host, port, contextPath);
   }
 
   public static ServerUrlConfig webGoat() {

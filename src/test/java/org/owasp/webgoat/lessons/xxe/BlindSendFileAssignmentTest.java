@@ -78,7 +78,7 @@ class BlindSendFileAssignmentTest extends LessonTest {
         .andExpect(
             jsonPath("$.feedback", CoreMatchers.is(messages.getMessage("assignment.not.solved"))))
         .andExpect(
-            jsonPath("$.output", CoreMatchers.startsWith("jakarta.xml.bind.UnmarshalException")));
+            jsonPath("$.output", CoreMatchers.startsWith("javax.xml.bind.UnmarshalException")));
   }
 
   @Test

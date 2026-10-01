@@ -1,8 +1,8 @@
 package org.owasp.webgoat.container.users;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Transient;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
 import lombok.Getter;
@@ -81,7 +81,7 @@ public class WebGoatUser implements UserDetails {
   }
 
   public boolean equals(Object obj) {
-    return obj instanceof WebGoatUser webGoatUser && this.user.equals(webGoatUser.user);
+    return obj instanceof WebGoatUser && this.user.equals(((WebGoatUser) obj).user);
   }
 
   public int hashCode() {

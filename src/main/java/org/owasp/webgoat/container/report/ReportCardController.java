@@ -28,6 +28,9 @@
 package org.owasp.webgoat.container.report;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import org.owasp.webgoat.container.CurrentUsername;
 import org.owasp.webgoat.container.i18n.PluginMessages;
 import org.owasp.webgoat.container.session.Course;
@@ -68,7 +71,7 @@ public class ReportCardController {
                       lessonTracker.isLessonSolved(),
                       lessonTracker.getNumberOfAttempts());
                 })
-            .toList();
+            .collect(Collectors.toList());
     return new ReportCard(
         course.getTotalOfLessons(),
         course.getTotalOfAssignments(),
@@ -77,12 +80,21 @@ public class ReportCardController {
         lessonStatistics);
   }
 
-  private record ReportCard(
-      int totalNumberOfLessons,
-      int totalNumberOfAssignments,
-      long numberOfAssignmentsSolved,
-      long numberOfLessonsSolved,
-      List<LessonStatistics> lessonStatistics) {}
+  @Getter
+  @AllArgsConstructor
+  private static class ReportCard {
+    private final int totalNumberOfLessons;
+    private final int totalNumberOfAssignments;
+    private final long numberOfAssignmentsSolved;
+    private final long numberOfLessonsSolved;
+    private final List<LessonStatistics> lessonStatistics;
+  }
 
-  private record LessonStatistics(String name, boolean solved, int numberOfAttempts) {}
+  @Getter
+  @AllArgsConstructor
+  private static class LessonStatistics {
+    private final String name;
+    private final boolean solved;
+    private final int numberOfAttempts;
+  }
 }

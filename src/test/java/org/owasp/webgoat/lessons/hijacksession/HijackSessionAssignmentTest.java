@@ -29,7 +29,7 @@ import static org.mockito.Mockito.lenient;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
-import jakarta.servlet.http.Cookie;
+import javax.servlet.http.Cookie;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.Test;
 import org.owasp.webgoat.container.plugins.LessonTest;

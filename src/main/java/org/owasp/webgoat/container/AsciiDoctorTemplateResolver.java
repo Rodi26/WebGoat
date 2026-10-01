@@ -32,7 +32,7 @@ package org.owasp.webgoat.container;
 
 import static org.asciidoctor.Asciidoctor.Factory.create;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;

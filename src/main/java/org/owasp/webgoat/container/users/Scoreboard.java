@@ -64,7 +64,7 @@ public class Scoreboard {
         .filter(LessonProgress::isLessonSolved)
         .map(LessonProgress::getLessonName)
         .map(this::toLessonTitle)
-        .toList();
+        .collect(Collectors.toList());
   }
 
   private String toLessonTitle(String id) {

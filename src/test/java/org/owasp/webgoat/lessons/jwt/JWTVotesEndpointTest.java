@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
-import jakarta.servlet.http.Cookie;
+import javax.servlet.http.Cookie;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;

@@ -22,7 +22,7 @@
 
 package org.owasp.webgoat.webwolf;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import java.io.File;
 import org.owasp.webgoat.container.UserInterceptor;
 import org.springframework.beans.factory.annotation.Value;

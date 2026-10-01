@@ -85,7 +85,7 @@ class SimpleXXETest extends LessonTest {
         .perform(MockMvcRequestBuilders.post("/xxe/simple").content("test"))
         .andExpect(status().isOk())
         .andExpect(
-            jsonPath("$.output", CoreMatchers.startsWith("jakarta.xml.bind.UnmarshalException")))
+            jsonPath("$.output", CoreMatchers.startsWith("javax.xml.bind.UnmarshalException")))
         .andExpect(
             jsonPath("$.feedback", CoreMatchers.is(messages.getMessage("assignment.not.solved"))));
   }

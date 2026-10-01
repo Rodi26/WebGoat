@@ -1,6 +1,7 @@
 package org.owasp.webgoat.container.session;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.owasp.webgoat.container.lessons.Category;
 import org.owasp.webgoat.container.lessons.Lesson;
@@ -52,7 +53,7 @@ public class Course {
    * @return The categories value
    */
   public List<Category> getCategories() {
-    return lessons.parallelStream().map(Lesson::getCategory).distinct().sorted().toList();
+    return lessons.parallelStream().map(Lesson::getCategory).distinct().sorted().collect(Collectors.toList());
   }
 
   /**
@@ -82,7 +83,7 @@ public class Course {
    * @return a {@link java.util.List} object.
    */
   public List<Lesson> getLessons(Category category) {
-    return this.lessons.stream().filter(l -> l.getCategory() == category).toList();
+    return this.lessons.stream().filter(l -> l.getCategory() == category).collect(Collectors.toList());
   }
 
   public void setLessons(List<Lesson> lessons) {

@@ -62,8 +62,8 @@ public class LessonTrackerInterceptor implements ResponseBodyAdvice<Object> {
       Class<? extends HttpMessageConverter<?>> aClass,
       ServerHttpRequest serverHttpRequest,
       ServerHttpResponse serverHttpResponse) {
-    if (o instanceof AttackResult attackResult) {
-      trackProgress(attackResult);
+    if (o instanceof AttackResult) {
+      trackProgress((AttackResult) o);
     }
     return o;
   }

@@ -27,7 +27,7 @@ import static org.owasp.webgoat.container.assignments.AttackResultBuilder.succes
 import static org.springframework.http.MediaType.ALL_VALUE;
 
 import com.google.common.collect.Lists;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;

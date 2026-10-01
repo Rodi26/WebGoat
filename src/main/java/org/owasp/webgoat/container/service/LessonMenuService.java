@@ -30,6 +30,7 @@ package org.owasp.webgoat.container.service;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import org.owasp.webgoat.container.CurrentUsername;
 import org.owasp.webgoat.container.lessons.Category;
@@ -88,7 +89,7 @@ public class LessonMenuService {
       categoryItem.setType(LessonMenuItemType.CATEGORY);
       // check for any lessons for this category
       List<Lesson> lessons = course.getLessons(category);
-      lessons = lessons.stream().sorted(Comparator.comparing(Lesson::getTitle)).toList();
+      lessons = lessons.stream().sorted(Comparator.comparing(Lesson::getTitle)).collect(Collectors.toList());
       for (Lesson lesson : lessons) {
         if (excludeLessons.contains(lesson.getName())) {
           continue;

@@ -47,39 +47,37 @@ public class WebSecurityConfig {
 
   @Bean
   public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    return http.authorizeHttpRequests(
-            auth -> {
-              auth.requestMatchers("/css/**", "/webjars/**", "/favicon.ico", "/js/**", "/images/**")
-                  .permitAll();
-              auth.requestMatchers(
-                      HttpMethod.GET,
-                      "/fileupload/**",
-                      "/files/**",
-                      "/landing/**",
-                      "/PasswordReset/**")
-                  .permitAll();
-              auth.requestMatchers(HttpMethod.POST, "/files", "/mail", "/requests").permitAll();
-              auth.anyRequest().authenticated();
-            })
-        .csrf(csrf -> csrf.disable())
-        .formLogin(
-            login ->
-                login
-                    .loginPage("/login")
-                    .failureUrl("/login?error=true")
-                    .defaultSuccessUrl("/home", true)
-                    .usernameParameter("username")
-                    .passwordParameter("password")
-                    .permitAll())
-        .oauth2Login(
-            oidc -> {
-              oidc.defaultSuccessUrl("/home");
-            })
-        .logout(logout -> logout.deleteCookies("WEBWOLFSESSION").invalidateHttpSession(true))
-        .exceptionHandling(
-            handling ->
-                handling.authenticationEntryPoint(new AjaxAuthenticationEntryPoint("/login")))
-        .build();
+    http.authorizeRequests()
+        .antMatchers("/css/**", "/webjars/**", "/favicon.ico", "/js/**", "/images/**")
+        .permitAll()
+        .antMatchers(
+            HttpMethod.GET, "/fileupload/**", "/files/**", "/landing/**", "/PasswordReset/**")
+        .permitAll()
+        .antMatchers(HttpMethod.POST, "/files", "/mail", "/requests")
+        .permitAll()
+        .anyRequest()
+        .authenticated()
+        .and()
+        .csrf()
+        .disable()
+        .formLogin()
+        .loginPage("/login")
+        .failureUrl("/login?error=true")
+        .defaultSuccessUrl("/home", true)
+        .usernameParameter("username")
+        .passwordParameter("password")
+        .permitAll()
+        .and()
+        .oauth2Login()
+        .defaultSuccessUrl("/home")
+        .and()
+        .logout()
+        .deleteCookies("WEBWOLFSESSION")
+        .invalidateHttpSession(true)
+        .and()
+        .exceptionHandling()
+        .authenticationEntryPoint(new AjaxAuthenticationEntryPoint("/login"));
+    return http.build();
   }
 
   @Autowired

@@ -51,7 +51,7 @@ public abstract class IntegrationTest {
     }
 
     protected WebWolfUrlBuilder path(String path, String... uriVariables) {
-      this.path = path.formatted(uriVariables);
+      this.path = String.format(path, (Object[]) uriVariables);
       return this;
     }
   }
@@ -163,7 +163,7 @@ public abstract class IntegrationTest {
           .when()
           .relaxedHTTPSValidation()
           .cookie("JSESSIONID", getWebGoatCookie())
-          .get(url("service/restartlesson.mvc/%s.lesson".formatted(lessonName)))
+          .get(url(String.format("service/restartlesson.mvc/%s.lesson", lessonName)))
           .then()
           .statusCode(200);
     }
@@ -205,7 +205,7 @@ public abstract class IntegrationTest {
             .when()
             .relaxedHTTPSValidation()
             .cookie("JSESSIONID", getWebGoatCookie())
-            .get(url("service/lessonoverview.mvc/%s.lesson".formatted(lesson)))
+            .get(url(String.format("service/lessonoverview.mvc/%s.lesson", lesson)))
             .andReturn();
 
     MatcherAssert.assertThat(

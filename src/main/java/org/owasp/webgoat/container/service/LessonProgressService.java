@@ -1,6 +1,7 @@
 package org.owasp.webgoat.container.service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +43,7 @@ public class LessonProgressService {
     var lessonProgress = userProgress.getLessonProgress(lesson);
     return lessonProgress.getLessonOverview().entrySet().stream()
         .map(entry -> new LessonOverview(entry.getKey().getAssignment(), entry.getValue()))
-        .toList();
+        .collect(Collectors.toList());
   }
 
   @AllArgsConstructor

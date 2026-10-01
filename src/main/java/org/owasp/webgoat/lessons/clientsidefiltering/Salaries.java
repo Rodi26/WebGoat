@@ -22,7 +22,7 @@
 
 package org.owasp.webgoat.lessons.clientsidefiltering;
 
-import jakarta.annotation.PostConstruct;
+import javax.annotation.PostConstruct;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;

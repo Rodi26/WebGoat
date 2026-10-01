@@ -22,7 +22,8 @@ public class LessonConnectionInvocationHandler implements InvocationHandler {
   @Override
   public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
     var authentication = SecurityContextHolder.getContext().getAuthentication();
-    if (authentication != null && authentication.getPrincipal() instanceof WebGoatUser user) {
+    if (authentication != null && authentication.getPrincipal() instanceof WebGoatUser) {
+      var user = (WebGoatUser) authentication.getPrincipal();
       try (var statement = targetConnection.createStatement()) {
         statement.execute("SET SCHEMA \"" + user.getUsername() + "\"");
       }

@@ -23,7 +23,7 @@ class LessonPage {
   }
 
   public void open(LessonName lessonName) {
-    page.navigate(webGoatUrl("start.mvc#lesson/%s".formatted(lessonName.lessonName())));
+    page.navigate(webGoatUrl(String.format("start.mvc#lesson/%s", lessonName.lessonName())));
   }
 
   /**
@@ -37,7 +37,7 @@ class LessonPage {
   public void resetLesson(LessonName lessonName) {
     Assertions.assertThat(
             page.request()
-                .get(webGoatUrl("service/restartlesson.mvc/%s".formatted(lessonName)))
+                .get(webGoatUrl(String.format("service/restartlesson.mvc/%s", lessonName)))
                 .ok())
         .isTrue();
     refreshPage();

@@ -25,12 +25,13 @@ package org.owasp.webgoat.webwolf.requests;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Instant;
+import java.util.stream.Collectors;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.actuate.web.exchanges.HttpExchange;
+import org.springframework.boot.actuate.trace.http.HttpTrace;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -68,14 +69,14 @@ public class Requests {
         traceRepository.findAll().stream()
             .filter(t -> allowedTrace(t, username))
             .map(t -> new Tracert(t.getTimestamp(), path(t), toJsonString(t)))
-            .toList();
+            .collect(Collectors.toList());
     model.addObject("traces", traces);
 
     return model;
   }
 
-  private boolean allowedTrace(HttpExchange t, String username) {
-    HttpExchange.Request req = t.getRequest();
+  private boolean allowedTrace(HttpTrace t, String username) {
+    HttpTrace.Request req = t.getRequest();
     boolean allowed = true;
     /* do not show certain traces to other users in a classroom setup */
     if (req.getUri().getPath().contains("/files") && !req.getUri().getPath().contains(username)) {
@@ -90,11 +91,11 @@ public class Requests {
     return allowed;
   }
 
-  private String path(HttpExchange t) {
+  private String path(HttpTrace t) {
     return t.getRequest().getUri().getPath();
   }
 
-  private String toJsonString(HttpExchange t) {
+  private String toJsonString(HttpTrace t) {
     try {
       return objectMapper.writeValueAsString(t);
     } catch (JsonProcessingException e) {

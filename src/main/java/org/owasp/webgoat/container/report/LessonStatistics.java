@@ -1,3 +1,12 @@
 package org.owasp.webgoat.container.report;
 
-record LessonStatistics(String name, boolean solved, int numberOfAttempts) {}
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+class LessonStatistics {
+  private final String name;
+  private final boolean solved;
+  private final int numberOfAttempts;
+}

@@ -1,7 +1,7 @@
 package org.owasp.webgoat.container;
 
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import org.owasp.webgoat.container.asciidoc.EnvironmentExposure;
 import org.springframework.core.env.Environment;
 import org.springframework.security.core.Authentication;

@@ -1,6 +1,6 @@
 package org.owasp.webgoat.lessons.challenges.challenge8;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;

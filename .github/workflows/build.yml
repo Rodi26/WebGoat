@@ -34,7 +34,7 @@ jobs:
       JFROG_CLI_RELEASES_REPO: ${{ vars.JFROG_CLI_RELEASES_REPO }}
     strategy:
       matrix:
-        java: [ '21']
+        java: [ '11']
     steps:
       - name: checkout Git repository
         uses: actions/checkout@v4
@@ -169,7 +169,7 @@ jobs:
       JFROG_CLI_RELEASES_REPO: ${{ vars.JFROG_CLI_RELEASES_REPO }}
     strategy:
       matrix:
-        java: [ '21']
+        java: [ '11']
     steps:
       - name: checkout Git repository
         uses: actions/checkout@v4
@@ -309,7 +309,7 @@ jobs:
       JFROG_CLI_RELEASES_REPO: ${{ vars.JFROG_CLI_RELEASES_REPO }}
     strategy:
       matrix:
-        java: [ '21']
+        java: [ '11']
     steps:
       - name: checkout Git repository
         uses: actions/checkout@v4

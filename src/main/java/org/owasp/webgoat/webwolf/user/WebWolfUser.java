@@ -22,10 +22,10 @@
 
 package org.owasp.webgoat.webwolf.user;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.util.Collection;
 import java.util.Collections;
 import lombok.Getter;

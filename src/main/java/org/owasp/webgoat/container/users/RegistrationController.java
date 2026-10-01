@@ -1,8 +1,8 @@
 package org.owasp.webgoat.container.users;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.Valid;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
+import javax.validation.Valid;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

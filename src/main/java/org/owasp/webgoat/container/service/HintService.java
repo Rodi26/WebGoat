@@ -8,6 +8,7 @@ package org.owasp.webgoat.container.service;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.owasp.webgoat.container.lessons.Assignment;
 import org.owasp.webgoat.container.lessons.Hint;
 import org.owasp.webgoat.container.session.Course;
@@ -27,7 +28,7 @@ public class HintService {
             .flatMap(lesson -> lesson.getAssignments().stream())
             .map(this::createHint)
             .flatMap(Collection::stream)
-            .toList();
+            .collect(Collectors.toList());
   }
 
   /**
@@ -42,6 +43,6 @@ public class HintService {
   }
 
   private List<Hint> createHint(Assignment a) {
-    return a.getHints().stream().map(h -> new Hint(h, a.getPath())).toList();
+    return a.getHints().stream().map(h -> new Hint(h, a.getPath())).collect(Collectors.toList());
   }
 }

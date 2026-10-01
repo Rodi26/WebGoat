@@ -25,7 +25,7 @@ package org.owasp.webgoat.lessons.cryptography;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.util.Base64;
 import java.util.Random;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;

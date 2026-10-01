@@ -5,6 +5,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -37,6 +38,6 @@ public class LessonResourceScanner {
   }
 
   public List<String> applyPattern(String pattern) {
-    return lessons.stream().map(lesson -> String.format(pattern, lesson)).toList();
+    return lessons.stream().map(lesson -> String.format(pattern, lesson)).collect(Collectors.toList());
   }
 }

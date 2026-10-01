@@ -7,7 +7,7 @@
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.4.2</version>
+    <version>2.5.15</version>
     <relativePath/>
   </parent>
 
@@ -66,14 +66,17 @@
   </issueManagement>
 
   <properties>
-    <java.version>21</java.version>
+    <java.version>11</java.version>
+    <spring-boot.version>2.5.15</spring-boot.version>
+    <spring-framework.version>5.3.39</spring-framework.version>
+    <spring-security.version>5.7.11</spring-security.version>
 
     <asciidoctorj.version>3.0.0</asciidoctorj.version>
     <bootstrap.version>5.3.3</bootstrap.version>
     <cglib.version>3.3.0</cglib.version>
     <checkstyle.version>3.0.1</checkstyle.version>
     <commons-compress.version>1.27.1</commons-compress.version>
-    <commons-io.version>2.18.0</commons-io.version>
+    <commons-io.version>2.11.0</commons-io.version>
     <commons-lang3.version>3.14.0</commons-lang3.version>
     <commons-text.version>1.13.0</commons-text.version>
     <guava.version>33.4.0-jre</guava.version>
@@ -91,7 +94,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 
-    <thymeleaf.version>3.1.2.RELEASE</thymeleaf.version>
+    <!-- Boot 2.5 manages Thymeleaf 3.0.x; do not pin 3.1 (Spring 6) -->
     <waittimeForServerStart>60</waittimeForServerStart>
     <webdriver.version>5.9.2</webdriver.version>
     <webgoat.context>/WebGoat</webgoat.context>
@@ -341,11 +344,6 @@
     </dependency>
 
     <dependency>
-      <groupId>org.flywaydb</groupId>
-      <artifactId>flyway-database-hsqldb</artifactId>
-    </dependency>
-
-    <dependency>
       <groupId>org.asciidoctor</groupId>
       <artifactId>asciidoctorj</artifactId>
     </dependency>
@@ -372,12 +370,12 @@
 
     <dependency>
       <groupId>org.thymeleaf.extras</groupId>
-      <artifactId>thymeleaf-extras-springsecurity6</artifactId>
+      <artifactId>thymeleaf-extras-springsecurity5</artifactId>
     </dependency>
 
     <dependency>
-      <groupId>jakarta.servlet</groupId>
-      <artifactId>jakarta.servlet-api</artifactId>
+      <groupId>javax.servlet</groupId>
+      <artifactId>javax.servlet-api</artifactId>
     </dependency>
 
     <dependency>

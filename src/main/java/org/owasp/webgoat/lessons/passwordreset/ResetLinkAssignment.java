@@ -71,18 +71,16 @@ public class ResetLinkAssignment implements AssignmentEndpoint {
   static List<String> resetLinks = new ArrayList<>();
 
   static final String TEMPLATE =
-      """
-          Hi, you requested a password reset link, please use this <a target='_blank'
-           href='http://%s/WebGoat/PasswordReset/reset/reset-password/%s'>link</a> to reset your
-           password.
-
-          If you did not request this password change you can ignore this message.
-          If you have any comments or questions, please do not hesitate to reach us at
-           support@webgoat-cloud.org
-
-          Kind regards,
-          Team WebGoat
-          """;
+      "Hi, you requested a password reset link, please use this <a target='_blank'\n"
+          + " href='http://%s/WebGoat/PasswordReset/reset/reset-password/%s'>link</a> to reset your\n"
+          + " password.\n"
+          + "\n"
+          + "If you did not request this password change you can ignore this message.\n"
+          + "If you have any comments or questions, please do not hesitate to reach us at\n"
+          + " support@webgoat-cloud.org\n"
+          + "\n"
+          + "Kind regards,\n"
+          + "Team WebGoat\n";
 
   @PostMapping("/PasswordReset/reset/login")
   @ResponseBody
@@ -108,9 +106,9 @@ public class ResetLinkAssignment implements AssignmentEndpoint {
       model.addAttribute("form", form);
       modelAndView.addObject("form", form);
       modelAndView.setViewName(
-          VIEW_FORMATTER.formatted("password_reset")); // Display html page for changing password
+          String.format(VIEW_FORMATTER, "password_reset")); // Display html page for changing password
     } else {
-      modelAndView.setViewName(VIEW_FORMATTER.formatted("password_link_not_found"));
+      modelAndView.setViewName(String.format(VIEW_FORMATTER, "password_link_not_found"));
     }
     return modelAndView;
   }
@@ -125,17 +123,17 @@ public class ResetLinkAssignment implements AssignmentEndpoint {
       bindingResult.rejectValue("password", "not.empty");
     }
     if (bindingResult.hasErrors()) {
-      modelAndView.setViewName(VIEW_FORMATTER.formatted("password_reset"));
+      modelAndView.setViewName(String.format(VIEW_FORMATTER, "password_reset"));
       return modelAndView;
     }
     if (!resetLinks.contains(form.getResetLink())) {
-      modelAndView.setViewName(VIEW_FORMATTER.formatted("password_link_not_found"));
+      modelAndView.setViewName(String.format(VIEW_FORMATTER, "password_link_not_found"));
       return modelAndView;
     }
     if (checkIfLinkIsFromTom(form.getResetLink(), username)) {
       usersToTomPassword.put(username, form.getPassword());
     }
-    modelAndView.setViewName(VIEW_FORMATTER.formatted("success"));
+    modelAndView.setViewName(String.format(VIEW_FORMATTER, "success"));
     return modelAndView;
   }
 

@@ -33,12 +33,12 @@ RUN \
   *) ARCH=unknown;; \
  esac && \
  echo "oeps == ${ARCH}==" && \
- curl -L https://github.com/adoptium/temurin23-binaries/releases/download/jdk-23.0.1%2B11/OpenJDK23U-jre_"${ARCH}"_linux_hotspot_23.0.1_11.tar.gz -o java.tar.gz && \
+ curl -L https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.32.1%2B1/OpenJDK11U-jre_"${ARCH}"_linux_hotspot_11.0.32.1_1.tar.gz -o java.tar.gz && \
  tar zfxv java.tar.gz && \
  rm -rf java.tar.gz && \
  chmod +x /config/start_webgoat.sh && \
  chmod +x /config/start_zap.sh && \
- mv /config/jdk-23.0.1+11-jre /config/java-jdk && \
+ mv /config/jdk-11.0.32.1+1-jre /config/java-jdk && \
  echo "JAVA_HOME=/config/java-jdk/" >> .bash_aliases && \
  echo "PATH=$PATH:$JAVA_HOME/bin" >> .bash_aliases
 

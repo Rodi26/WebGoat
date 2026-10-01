@@ -2,7 +2,7 @@ package org.owasp.webgoat.lessons.challenges.challenge7;
 
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.LocalDateTime;

@@ -25,8 +25,8 @@ package org.owasp.webgoat.lessons.authbypass;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.failed;
 import static org.owasp.webgoat.container.assignments.AttackResultBuilder.success;
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;

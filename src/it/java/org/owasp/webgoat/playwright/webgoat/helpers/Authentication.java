@@ -4,6 +4,7 @@ import static com.microsoft.playwright.assertions.PlaywrightAssertions.assertTha
 
 import com.microsoft.playwright.Browser;
 import com.microsoft.playwright.Page;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import org.owasp.webgoat.playwright.webgoat.pages.RegistrationPage;
 import org.owasp.webgoat.playwright.webgoat.pages.WebGoatLoginPage;
@@ -18,7 +19,30 @@ import org.owasp.webgoat.playwright.webwolf.pages.WebWolfLoginPage;
  */
 public class Authentication {
 
-  public record User(String name, String password, String auth) {
+  @EqualsAndHashCode
+  public static class User {
+    private final String name;
+    private final String password;
+    private final String auth;
+
+    public User(String name, String password, String auth) {
+      this.name = name;
+      this.password = password;
+      this.auth = auth;
+    }
+
+    public String name() {
+      return name;
+    }
+
+    public String password() {
+      return password;
+    }
+
+    public String auth() {
+      return auth;
+    }
+
     boolean loggedIn() {
       return auth != null;
     }

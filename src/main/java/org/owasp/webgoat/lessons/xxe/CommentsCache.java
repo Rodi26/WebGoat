@@ -22,8 +22,8 @@
 
 package org.owasp.webgoat.lessons.xxe;
 
-import jakarta.xml.bind.JAXBContext;
-import jakarta.xml.bind.JAXBException;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import java.io.StringReader;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

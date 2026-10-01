@@ -33,8 +33,8 @@ public class AttackResultMessageResponseBodyAdvice implements ResponseBodyAdvice
       Class<? extends HttpMessageConverter<?>> selectedConverterType,
       ServerHttpRequest request,
       ServerHttpResponse response) {
-    if (body instanceof AttackResult a) {
-      return a.apply(pluginMessages);
+    if (body instanceof AttackResult) {
+      return ((AttackResult) body).apply(pluginMessages);
     }
     return body;
   }

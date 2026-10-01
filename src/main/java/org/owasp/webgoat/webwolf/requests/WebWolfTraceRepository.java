@@ -28,8 +28,8 @@ import static org.owasp.webgoat.webwolf.requests.WebWolfTraceRepository.Exclusio
 import com.google.common.collect.EvictingQueue;
 import java.util.ArrayList;
 import java.util.List;
-import org.springframework.boot.actuate.web.exchanges.HttpExchange;
-import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
+import org.springframework.boot.actuate.trace.http.HttpTrace;
+import org.springframework.boot.actuate.trace.http.HttpTraceRepository;
 
 /**
  * Keep track of all the incoming requests, we are only keeping track of request originating from
@@ -38,20 +38,41 @@ import org.springframework.boot.actuate.web.exchanges.HttpExchangeRepository;
  * @author nbaars
  * @since 8/13/17.
  */
-public class WebWolfTraceRepository implements HttpExchangeRepository {
+public class WebWolfTraceRepository implements HttpTraceRepository {
   private enum MatchingMode {
     CONTAINS,
     ENDS_WITH,
     EQUALS;
   }
 
-  record Exclusion(String path, MatchingMode mode) {
+  static class Exclusion {
+    private final String path;
+    private final MatchingMode mode;
+
+    Exclusion(String path, MatchingMode mode) {
+      this.path = path;
+      this.mode = mode;
+    }
+
+    public String path() {
+      return path;
+    }
+
+    public MatchingMode mode() {
+      return mode;
+    }
+
     public boolean matches(String path) {
-      return switch (mode) {
-        case CONTAINS -> path.contains(this.path);
-        case ENDS_WITH -> path.endsWith(this.path);
-        case EQUALS -> path.equals(this.path);
-      };
+      switch (mode) {
+        case CONTAINS:
+          return path.contains(this.path);
+        case ENDS_WITH:
+          return path.endsWith(this.path);
+        case EQUALS:
+          return path.equals(this.path);
+        default:
+          throw new IllegalStateException("Unknown matching mode: " + mode);
+      }
     }
 
     public static Exclusion contains(String exclusionPattern) {
@@ -63,7 +84,7 @@ public class WebWolfTraceRepository implements HttpExchangeRepository {
     }
   }
 
-  private final EvictingQueue<HttpExchange> traces = EvictingQueue.create(10000);
+  private final EvictingQueue<HttpTrace> traces = EvictingQueue.create(10000);
   private final List<Exclusion> exclusionList =
       List.of(
           contains("/tmpdir"),
@@ -77,7 +98,7 @@ public class WebWolfTraceRepository implements HttpExchangeRepository {
           contains("/mail"));
 
   @Override
-  public List<HttpExchange> findAll() {
+  public List<HttpTrace> findAll() {
     return new ArrayList<>(traces);
   }
 
@@ -86,7 +107,7 @@ public class WebWolfTraceRepository implements HttpExchangeRepository {
   }
 
   @Override
-  public void add(HttpExchange httpTrace) {
+  public void add(HttpTrace httpTrace) {
     var path = httpTrace.getRequest().getUri().getPath();
     if (!isInExclusionList(path)) {
       traces.add(httpTrace);

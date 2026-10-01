@@ -25,6 +25,7 @@ package org.owasp.webgoat.container.lessons;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.util.*;
+import java.util.stream.Collectors;
 import org.apache.commons.lang3.ArrayUtils;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
 import org.owasp.webgoat.container.assignments.AssignmentHints;
@@ -58,8 +59,9 @@ public class CourseConfiguration {
       AssignmentEndpoint assignmentEndpoint, String packageName) {
     if (packageName.equals("org.owasp.webgoat.lessons")) {
       throw new IllegalStateException(
-          "No lesson found for assignment: '%s'"
-              .formatted(assignmentEndpoint.getClass().getSimpleName()));
+          String.format(
+              "No lesson found for assignment: '%s'",
+              assignmentEndpoint.getClass().getSimpleName()));
     }
     lessons.stream()
         .filter(l -> l.getClass().getPackageName().equals(packageName))
@@ -117,8 +119,8 @@ public class CourseConfiguration {
 
   private List<String> findDiff() {
     var matchedToLessons =
-        lessons.stream().flatMap(l -> l.getAssignments().stream()).map(a -> a.getName()).toList();
-    var allAssignments = assignments.stream().map(a -> a.getClass().getSimpleName()).toList();
+        lessons.stream().flatMap(l -> l.getAssignments().stream()).map(a -> a.getName()).collect(Collectors.toList());
+    var allAssignments = assignments.stream().map(a -> a.getClass().getSimpleName()).collect(Collectors.toList());
 
     var diff = new ArrayList<>(allAssignments);
     diff.removeAll(matchedToLessons);

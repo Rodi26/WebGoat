@@ -57,9 +57,7 @@ class MissingFunctionACUsersTest extends LessonTest {
   @Test
   void addUser() throws Exception {
     var user =
-        """
-                {"username":"newUser","password":"newUser12","admin": "true"}
-                """;
+        "{\"username\":\"newUser\",\"password\":\"newUser12\",\"admin\": \"true\"}\n";
     mockMvc
         .perform(
             MockMvcRequestBuilders.post("/access-control/users")

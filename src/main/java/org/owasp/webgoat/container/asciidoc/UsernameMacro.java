@@ -22,8 +22,8 @@ public class UsernameMacro extends InlineMacroProcessor {
       StructuralNode contentNode, String target, Map<String, Object> attributes) {
     var auth = SecurityContextHolder.getContext().getAuthentication();
     var username = "unknown";
-    if (auth.getPrincipal() instanceof WebGoatUser webGoatUser) {
-      username = webGoatUser.getUsername();
+    if (auth.getPrincipal() instanceof WebGoatUser) {
+      username = ((WebGoatUser) auth.getPrincipal()).getUsername();
     }
 
     // see

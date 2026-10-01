@@ -22,7 +22,6 @@
 package org.owasp.webgoat.container.service;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mock.Strictness.LENIENT;
 import static org.mockito.Mockito.when;
 import static org.owasp.webgoat.container.service.LessonMenuService.URL_LESSONMENU_MVC;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,7 +49,7 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 @ExtendWith(MockitoExtension.class)
 public class LessonMenuServiceTest {
 
-  @Mock(strictness = LENIENT)
+  @Mock(lenient = true)
   private LessonProgress lessonTracker;
 
   @Mock private Course course;

@@ -25,7 +25,7 @@ package org.owasp.webgoat.webwolf;
 import static java.util.Comparator.comparing;
 import static org.springframework.http.MediaType.ALL_VALUE;
 
-import jakarta.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletRequest;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
@@ -35,6 +35,9 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.TimeZone;
+import java.util.stream.Collectors;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -115,8 +118,6 @@ public class FileServer {
     }
     changeIndicatorFile.delete();
 
-    record UploadedFile(String name, String size, String link, String creationTime) {}
-
     var uploadedFiles = new ArrayList<UploadedFile>();
     File[] files = destinationDir.listFiles(File::isFile);
     if (files != null) {
@@ -130,9 +131,20 @@ public class FileServer {
 
     modelAndView.addObject(
         "files",
-        uploadedFiles.stream().sorted(comparing(UploadedFile::creationTime).reversed()).toList());
+        uploadedFiles.stream()
+            .sorted(comparing(UploadedFile::getCreationTime).reversed())
+            .collect(Collectors.toList()));
     modelAndView.addObject("webwolf_url", "http://" + server + ":" + port + contextPath);
     return modelAndView;
+  }
+
+  @Getter
+  @AllArgsConstructor
+  private static class UploadedFile {
+    private final String name;
+    private final String size;
+    private final String link;
+    private final String creationTime;
   }
 
   private String getCreationTime(TimeZone timezone, File file) {
