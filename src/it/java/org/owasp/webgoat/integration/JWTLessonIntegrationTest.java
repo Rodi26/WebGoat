@@ -70,7 +70,7 @@ public class JWTLessonIntegrationTest extends IntegrationTest {
   private String getSecretToken(String token) {
     for (String key : JWTSecretKeyEndpoint.SECRETS) {
       try {
-        Jwt jwt = Jwts.parser().setSigningKey(TextCodec.BASE64.encode(key)).parse(token);
+        Jwt jwt = Jwts.parser().setSigningKey(TextCodec.BASE64.encode(key)).build().parse(token);
       } catch (JwtException e) {
         continue;
       }

@@ -67,7 +67,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void solveAssignment() throws Exception {
-    Claims claims = createClaims("WebGoat");
+    Map<String, Object> claims = createClaims("WebGoat");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
     mockMvc
@@ -78,7 +78,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void solveAssignmentWithLowercase() throws Exception {
-    Claims claims = createClaims("webgoat");
+    Map<String, Object> claims = createClaims("webgoat");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
     mockMvc
@@ -89,7 +89,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void oneOfClaimIsMissingShouldNotSolveAssignment() throws Exception {
-    Claims claims = createClaims("WebGoat");
+    Map<String, Object> claims = createClaims("WebGoat");
     claims.remove("aud");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
@@ -103,7 +103,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void incorrectUser() throws Exception {
-    Claims claims = createClaims("Tom");
+    Map<String, Object> claims = createClaims("Tom");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
     mockMvc
@@ -118,7 +118,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void incorrectToken() throws Exception {
-    Claims claims = createClaims("Tom");
+    Map<String, Object> claims = createClaims("Tom");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, "wrong_password").compact();
 
     mockMvc
@@ -130,7 +130,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   void unsignedToken() throws Exception {
-    Claims claims = createClaims("WebGoat");
+    Map<String, Object> claims = createClaims("WebGoat");
     String token = Jwts.builder().setClaims(claims).compact();
 
     mockMvc
