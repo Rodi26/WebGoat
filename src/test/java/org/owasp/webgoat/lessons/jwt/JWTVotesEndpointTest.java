@@ -31,9 +31,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import javax.servlet.http.Cookie;
-import java.util.HashMap;
 import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -56,7 +56,7 @@ public class JWTVotesEndpointTest extends LessonTest {
   @Test
   public void solveAssignment() throws Exception {
     // Create new token and set alg to none and do not sign it
-    Map<String, Object> claims = new HashMap<>();
+    Claims claims = Jwts.claims();
     claims.put("admin", "true");
     claims.put("user", "Tom");
     String token = Jwts.builder().setClaims(claims).setHeaderParam("alg", "none").compact();
@@ -74,7 +74,7 @@ public class JWTVotesEndpointTest extends LessonTest {
   @Test
   public void solveAssignmentWithBoolean() throws Exception {
     // Create new token and set alg to none and do not sign it
-    Map<String, Object> claims = new HashMap<>();
+    Claims claims = Jwts.claims();
     claims.put("admin", true);
     claims.put("user", "Tom");
     String token = Jwts.builder().setClaims(claims).setHeaderParam("alg", "none").compact();
@@ -220,7 +220,7 @@ public class JWTVotesEndpointTest extends LessonTest {
 
   @Test
   public void unknownUserWithValidTokenShouldNotBeAbleToVote() throws Exception {
-    Map<String, Object> claims = new HashMap<>();
+    Claims claims = Jwts.claims();
     claims.put("admin", "true");
     claims.put("user", "Intruder");
     String token =
@@ -238,7 +238,7 @@ public class JWTVotesEndpointTest extends LessonTest {
 
   @Test
   public void unknownUserShouldSeeGuestView() throws Exception {
-    Map<String, Object> claims = new HashMap<>();
+    Claims claims = Jwts.claims();
     claims.put("admin", "true");
     claims.put("user", "Intruder");
     String token =

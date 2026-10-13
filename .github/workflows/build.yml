@@ -113,7 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5; do
-            if jf mvn clean install -B -e -DskipTests; then
+            if jf mvn clean install -Pztr-demo -B -e -DskipTests; then
               exit 0
             fi
             echo "jf mvn failed (attempt ${attempt}/5), retry in 60s..."

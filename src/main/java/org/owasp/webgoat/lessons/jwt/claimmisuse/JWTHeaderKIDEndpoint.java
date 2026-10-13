@@ -31,9 +31,9 @@ import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
+import io.jsonwebtoken.impl.TextCodec;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.owasp.webgoat.container.LessonDataSource;
 import org.owasp.webgoat.container.assignments.AssignmentEndpoint;
@@ -93,7 +93,7 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                                   .executeQuery(
                                       "SELECT key FROM jwt_keys WHERE id = '" + kid + "'");
                           while (rs.next()) {
-                            return Base64.getDecoder().decode(rs.getString(1));
+                            return TextCodec.BASE64.decode(rs.getString(1));
                           }
                         } catch (SQLException e) {
                           errorMessage[0] = e.getMessage();
@@ -101,8 +101,7 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                         return null;
                       }
                     })
-                .build()
-                .parseSignedClaims(token);
+                .parseClaimsJws(token);
         if (errorMessage[0] != null) {
           return failed(this).output(errorMessage[0]).build();
         }

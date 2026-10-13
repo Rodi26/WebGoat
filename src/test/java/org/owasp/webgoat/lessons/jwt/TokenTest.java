@@ -27,11 +27,10 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
+import io.jsonwebtoken.impl.TextCodec;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -53,26 +52,24 @@ public class TokenTest {
             .signWith(io.jsonwebtoken.SignatureAlgorithm.HS512, key)
             .compact();
     log.debug(token);
-    Jwt jwt = Jwts.parser().setSigningKey("qwertyqwerty1234").build().parse(token);
+    Jwt jwt = Jwts.parser().setSigningKey("qwertyqwerty1234").parse(token);
     jwt =
         Jwts.parser()
             .setSigningKeyResolver(
                 new SigningKeyResolverAdapter() {
                   @Override
                   public byte[] resolveSigningKeyBytes(JwsHeader header, Claims claims) {
-                    return Base64.getDecoder().decode(key);
+                    return TextCodec.BASE64.decode(key);
                   }
                 })
-            .build()
             .parse(token);
   }
 
   @Test
   public void testRefresh() {
     Instant now = Instant.now(); // current date
-    Map<String, Object> claims = new HashMap<>();
-    claims.put("iat", Date.from(now.minus(Duration.ofDays(10))));
-    claims.put("exp", Date.from(now.minus(Duration.ofDays(9))));
+    Claims claims = Jwts.claims().setIssuedAt(Date.from(now.minus(Duration.ofDays(10))));
+    claims.setExpiration(Date.from(now.minus(Duration.ofDays(9))));
     claims.put("admin", "false");
     claims.put("user", "Tom");
     String token =

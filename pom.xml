@@ -81,8 +81,8 @@
     <commons-text.version>1.13.0</commons-text.version>             <!-- ZTR patched: XSS/RCE fixes -->
     <guava.version>33.4.0-jre</guava.version>                       <!-- ZTR patched JSON/RCE -->
     <jacoco.version>0.8.11</jacoco.version>
-    <!-- Chainguard CVE-2024: JWT signatures validation fixed in 0.12.x release -->
-    <jjwt.version>0.12.6</jjwt.version>                             <!-- UPGRADED: 0.9.1 -> 0.12.6 patched -->
+    <!-- Legacy JWT version for the ZTR demo; verify remediation in the resolved artifact. -->
+    <jjwt.version>0.9.1</jjwt.version>
     <jose4j.version>0.9.3</jose4j.version>
     <jquery.version>3.7.1</jquery.version>
     <jsoup.version>1.18.3</jsoup.version>
@@ -106,8 +106,8 @@
     <webwolf.port>9090</webwolf.port>
     <wiremock.version>3.10.0</wiremock.version>
     <xml-resolver.version>1.2</xml-resolver.version>
-    <!-- Chainguard CVE-2024: RCE in deserialization fixed in 1.4.x CRITICAL branch -->
-    <xstream.version>1.4.20</xstream.version>                        <!-- UPGRADED: RCE patched by ZTR -->
+    <!-- Legacy XStream version for the ZTR demo; verify remediation in the resolved artifact. -->
+    <xstream.version>1.4.5</xstream.version>
     <zxcvbn.version>1.9.0</zxcvbn.version>
   </properties>
 
@@ -641,6 +641,21 @@
 
   <!-- profiles left unchanged (your config is syntactically fine) -->
   <profiles>
+    <!-- ZTR resolves the original coordinates through the solenglatest virtual repository. -->
+    <profile>
+      <id>ztr-demo</id>
+      <properties>
+        <commons-lang3.version>3.13.0</commons-lang3.version>
+      </properties>
+      <dependencies>
+        <dependency>
+          <groupId>org.apache.logging.log4j</groupId>
+          <artifactId>log4j-core</artifactId>
+          <version>2.23.1</version>
+          <scope>test</scope>
+        </dependency>
+      </dependencies>
+    </profile>
     <profile>
       <id>local-server</id>
     </profile>

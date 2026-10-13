@@ -28,12 +28,11 @@ import static org.owasp.webgoat.lessons.jwt.JWTSecretKeyEndpoint.JWT_SECRET;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,15 +49,15 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
     this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
   }
 
-  private Map<String, Object> createClaims(String username) {
-    Map<String, Object> claims = new HashMap<>();
+  private Claims createClaims(String username) {
+    Claims claims = Jwts.claims();
     claims.put("admin", "true");
     claims.put("user", "Tom");
-    claims.put("exp", Date.from(Instant.now().plus(Duration.ofDays(1))));
-    claims.put("iat", Date.from(Instant.now().plus(Duration.ofDays(1))));
-    claims.put("iss", "iss");
-    claims.put("aud", "aud");
-    claims.put("sub", "sub");
+    claims.setExpiration(Date.from(Instant.now().plus(Duration.ofDays(1))));
+    claims.setIssuedAt(Date.from(Instant.now().plus(Duration.ofDays(1))));
+    claims.setIssuer("iss");
+    claims.setAudience("aud");
+    claims.setSubject("sub");
     claims.put("username", username);
     claims.put("Email", "webgoat@webgoat.io");
     claims.put("Role", new String[] {"user"});
@@ -67,7 +66,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void solveAssignment() throws Exception {
-    Map<String, Object> claims = createClaims("WebGoat");
+    Claims claims = createClaims("WebGoat");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
     mockMvc
@@ -78,7 +77,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void solveAssignmentWithLowercase() throws Exception {
-    Map<String, Object> claims = createClaims("webgoat");
+    Claims claims = createClaims("webgoat");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
     mockMvc
@@ -89,7 +88,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void oneOfClaimIsMissingShouldNotSolveAssignment() throws Exception {
-    Map<String, Object> claims = createClaims("WebGoat");
+    Claims claims = createClaims("WebGoat");
     claims.remove("aud");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
@@ -103,7 +102,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void incorrectUser() throws Exception {
-    Map<String, Object> claims = createClaims("Tom");
+    Claims claims = createClaims("Tom");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, JWT_SECRET).compact();
 
     mockMvc
@@ -118,7 +117,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   public void incorrectToken() throws Exception {
-    Map<String, Object> claims = createClaims("Tom");
+    Claims claims = createClaims("Tom");
     String token = Jwts.builder().setClaims(claims).signWith(HS512, "wrong_password").compact();
 
     mockMvc
@@ -130,7 +129,7 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
 
   @Test
   void unsignedToken() throws Exception {
-    Map<String, Object> claims = createClaims("WebGoat");
+    Claims claims = createClaims("WebGoat");
     String token = Jwts.builder().setClaims(claims).compact();
 
     mockMvc
