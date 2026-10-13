@@ -104,7 +104,7 @@ jobs:
           fi
       - name: Configure JFrog CLI for Maven
         run: |
-          jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+          jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }} --use-wrapper=true
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
@@ -116,7 +116,7 @@ jobs:
             if jf mvn clean install -B -e -DskipTests; then
               exit 0
             fi
-            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
+            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s..."
             sleep 60
           done
           exit 1
@@ -243,7 +243,7 @@ jobs:
           fi
       - name: Configure JFrog CLI for Maven
         run: |
-          jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+          jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }} --use-wrapper=true
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
@@ -255,7 +255,7 @@ jobs:
             if jf mvn clean install -B -e -DskipTests; then
               exit 0
             fi
-            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
+            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s..."
             sleep 60
           done
           exit 1
@@ -416,7 +416,7 @@ jobs:
           fi
       - name: Configure JFrog CLI for Maven
         run: |
-          jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
+          jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }} --use-wrapper=true
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
@@ -428,7 +428,7 @@ jobs:
             if jf mvn clean install -B -e -DskipTests; then
               exit 0
             fi
-            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
+            echo "jf mvn failed (attempt ${attempt}/5), retry in 60s..."
             sleep 60
           done
           exit 1
