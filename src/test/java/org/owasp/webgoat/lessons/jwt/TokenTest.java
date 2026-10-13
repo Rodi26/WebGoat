@@ -31,6 +31,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class TokenTest {
             .signWith(io.jsonwebtoken.SignatureAlgorithm.HS512, key)
             .compact();
     log.debug(token);
-    Jwt jwt = Jwts.parser().setSigningKey("qwertyqwerty1234").parse(token);
+    Jwt jwt = Jwts.parser().setSigningKey("qwertyqwerty1234").build().parse(token);
     jwt =
         Jwts.parser()
             .setSigningKeyResolver(
@@ -62,14 +63,16 @@ public class TokenTest {
                     return Base64.getDecoder().decode(key);
                   }
                 })
+            .build()
             .parse(token);
   }
 
   @Test
   public void testRefresh() {
     Instant now = Instant.now(); // current date
-    Claims claims = Jwts.claims().setIssuedAt(Date.from(now.minus(Duration.ofDays(10))));
-    claims.setExpiration(Date.from(now.minus(Duration.ofDays(9))));
+    Map<String, Object> claims = new HashMap<>();
+    claims.put("iat", Date.from(now.minus(Duration.ofDays(10))));
+    claims.put("exp", Date.from(now.minus(Duration.ofDays(9))));
     claims.put("admin", "false");
     claims.put("user", "Tom");
     String token =

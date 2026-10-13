@@ -101,7 +101,8 @@ public class JWTHeaderKIDEndpoint implements AssignmentEndpoint {
                         return null;
                       }
                     })
-                .parseClaimsJws(token);
+                .build()
+                .parseSignedClaims(token);
         if (errorMessage[0] != null) {
           return failed(this).output(errorMessage[0]).build();
         }

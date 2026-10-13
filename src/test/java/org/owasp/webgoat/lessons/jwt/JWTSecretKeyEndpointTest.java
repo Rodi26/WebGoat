@@ -28,11 +28,12 @@ import static org.owasp.webgoat.lessons.jwt.JWTSecretKeyEndpoint.JWT_SECRET;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import org.hamcrest.CoreMatchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -49,15 +50,15 @@ public class JWTSecretKeyEndpointTest extends LessonTest {
     this.mockMvc = MockMvcBuilders.webAppContextSetup(this.wac).build();
   }
 
-  private Claims createClaims(String username) {
-    Claims claims = Jwts.claims();
+  private Map<String, Object> createClaims(String username) {
+    Map<String, Object> claims = new HashMap<>();
     claims.put("admin", "true");
     claims.put("user", "Tom");
-    claims.setExpiration(Date.from(Instant.now().plus(Duration.ofDays(1))));
-    claims.setIssuedAt(Date.from(Instant.now().plus(Duration.ofDays(1))));
-    claims.setIssuer("iss");
-    claims.setAudience("aud");
-    claims.setSubject("sub");
+    claims.put("exp", Date.from(Instant.now().plus(Duration.ofDays(1))));
+    claims.put("iat", Date.from(Instant.now().plus(Duration.ofDays(1))));
+    claims.put("iss", "iss");
+    claims.put("aud", "aud");
+    claims.put("sub", "sub");
     claims.put("username", username);
     claims.put("Email", "webgoat@webgoat.io");
     claims.put("Role", new String[] {"user"});

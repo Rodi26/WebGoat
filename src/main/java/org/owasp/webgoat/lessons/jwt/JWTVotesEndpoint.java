@@ -123,12 +123,11 @@ public class JWTVotesEndpoint implements AssignmentEndpoint {
   @GetMapping("/JWT/votings/login")
   public void login(@RequestParam("user") String user, HttpServletResponse response) {
     if (validUsers.contains(user)) {
-      Claims claims = Jwts.claims().setIssuedAt(Date.from(Instant.now().plus(Duration.ofDays(10))));
-      claims.put("admin", "false");
-      claims.put("user", user);
       String token =
           Jwts.builder()
-              .setClaims(claims)
+              .setIssuedAt(Date.from(Instant.now().plus(Duration.ofDays(10))))
+              .claim("admin", "false")
+              .claim("user", user)
               .signWith(io.jsonwebtoken.SignatureAlgorithm.HS512, JWT_PASSWORD)
               .compact();
       Cookie cookie = new Cookie("access_token", token);
@@ -156,7 +155,7 @@ public class JWTVotesEndpoint implements AssignmentEndpoint {
       value.setSerializationView(Views.GuestView.class);
     } else {
       try {
-        Jwt jwt = Jwts.parser().setSigningKey(JWT_PASSWORD).parse(accessToken);
+        Jwt jwt = Jwts.parser().setSigningKey(JWT_PASSWORD).build().parse(accessToken);
         Claims claims = (Claims) jwt.getBody();
         String user = (String) claims.get("user");
         if ("Guest".equals(user) || !validUsers.contains(user)) {
@@ -181,7 +180,7 @@ public class JWTVotesEndpoint implements AssignmentEndpoint {
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
     } else {
       try {
-        Jwt jwt = Jwts.parser().setSigningKey(JWT_PASSWORD).parse(accessToken);
+        Jwt jwt = Jwts.parser().setSigningKey(JWT_PASSWORD).build().parse(accessToken);
         Claims claims = (Claims) jwt.getBody();
         String user = (String) claims.get("user");
         if (!validUsers.contains(user)) {
@@ -204,7 +203,7 @@ public class JWTVotesEndpoint implements AssignmentEndpoint {
       return failed(this).feedback("jwt-invalid-token").build();
     } else {
       try {
-        Jwt jwt = Jwts.parser().setSigningKey(JWT_PASSWORD).parse(accessToken);
+        Jwt jwt = Jwts.parser().setSigningKey(JWT_PASSWORD).build().parse(accessToken);
         Claims claims = (Claims) jwt.getBody();
         boolean isAdmin = Boolean.valueOf(String.valueOf(claims.get("admin")));
         if (!isAdmin) {
