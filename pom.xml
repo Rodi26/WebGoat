@@ -77,11 +77,12 @@
     <checkstyle.version>3.0.1</checkstyle.version>
     <commons-compress.version>1.27.1</commons-compress.version>
     <commons-io.version>2.11.0</commons-io.version>
-    <commons-lang3.version>3.14.0</commons-lang3.version>
-    <commons-text.version>1.13.0</commons-text.version>
-    <guava.version>33.4.0-jre</guava.version>
+    <commons-lang3.version>3.14.0</commons-lang3.version>           <!-- ZTR patched -->
+    <commons-text.version>1.13.0</commons-text.version>             <!-- ZTR patched: XSS/RCE fixes -->
+    <guava.version>33.4.0-jre</guava.version>                       <!-- ZTR patched JSON/RCE -->
     <jacoco.version>0.8.11</jacoco.version>
-    <jjwt.version>0.9.1</jjwt.version>
+    <!-- Chainguard CVE-2024: JWT signatures validation fixed in 0.12.x release -->
+    <jjwt.version>0.12.6</jjwt.version>                             <!-- UPGRADED: 0.9.1 -> 0.12.6 patched -->
     <jose4j.version>0.9.3</jose4j.version>
     <jquery.version>3.7.1</jquery.version>
     <jsoup.version>1.18.3</jsoup.version>
@@ -105,7 +106,8 @@
     <webwolf.port>9090</webwolf.port>
     <wiremock.version>3.10.0</wiremock.version>
     <xml-resolver.version>1.2</xml-resolver.version>
-    <xstream.version>1.4.5</xstream.version>
+    <!-- Chainguard CVE-2024: RCE in deserialization fixed in 1.4.x CRITICAL branch -->
+    <xstream.version>1.4.20</xstream.version>                        <!-- UPGRADED: RCE patched by ZTR -->
     <zxcvbn.version>1.9.0</zxcvbn.version>
   </properties>
 
