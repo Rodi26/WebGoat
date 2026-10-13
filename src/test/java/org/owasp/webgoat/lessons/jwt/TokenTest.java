@@ -27,9 +27,9 @@ import io.jsonwebtoken.JwsHeader;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SigningKeyResolverAdapter;
-import io.jsonwebtoken.impl.TextCodec;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -59,7 +59,7 @@ public class TokenTest {
                 new SigningKeyResolverAdapter() {
                   @Override
                   public byte[] resolveSigningKeyBytes(JwsHeader header, Claims claims) {
-                    return TextCodec.BASE64.decode(key);
+                    return Base64.getDecoder().decode(key);
                   }
                 })
             .parse(token);

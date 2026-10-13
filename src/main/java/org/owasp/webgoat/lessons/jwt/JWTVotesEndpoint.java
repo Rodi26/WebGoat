@@ -32,7 +32,8 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.impl.TextCodec;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import javax.annotation.PostConstruct;
 import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletResponse;
@@ -70,7 +71,8 @@ import org.springframework.web.bind.annotation.RestController;
 })
 public class JWTVotesEndpoint implements AssignmentEndpoint {
 
-  public static final String JWT_PASSWORD = TextCodec.BASE64.encode("victory");
+  public static final String JWT_PASSWORD =
+      Base64.getEncoder().encodeToString("victory".getBytes(StandardCharsets.UTF_8));
   private static String validUsers = "TomJerrySylvester";
 
   private static int totalVotes = 38929;
