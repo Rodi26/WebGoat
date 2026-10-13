@@ -45,8 +45,14 @@ jobs:
           distribution: 'adopt'
       - name: Extracting the artifact name and version 2 from POM file
         run: |
-          echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import xml.etree.ElementTree as ET
+
+          project = ET.parse("pom.xml").getroot()
+          ns = "{http://maven.apache.org/POM/4.0.0}"
+          print(f"ArtifactName={project.findtext(ns + 'artifactId')}")
+          print(f"Version={project.findtext(ns + 'version')}")
+          PY
 
       # DOCKER_DEV_REPO = clé du repo Docker seulement (ex. rodolphef-oci-dev-virtual). Host = JF_URL / JFROG_URL (voir scripts/compute-docker-image-ref.py).
       - name: Docker image reference (host from JF_URL)
@@ -96,18 +102,9 @@ jobs:
             jf rt ping
             jf rt curl -sS "/artifactory/api/repositories" -o repos.json
           fi
-      # Setup JFrog CLI for Maven - avoid build-info-extractor jar incompatibility issues
-      # Use Artifactory as primary repo with Maven Central fallback via settings.xml
-      - name: Config JFrog CLI for Maven (with compatibility fixes)
-        env:
-          # Disable automatic download of incompatible build-info-extractor jars  
-          JF_MVN_DEPENDENCIES_SERVER_URL: "${{ secrets.JF_URL }}/oss-release-local"
+      - name: Configure JFrog CLI for Maven
         run: |
-          echo "=== Using Artifactory (${JF_URL}) as JFrog dependencies server ==="
-          # Configure Maven repositories (Artifactory proxy) but skip incompatible build-info-extractor 
           jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
-      - name: Verify Maven setup
-        run: mvn -version
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
@@ -116,9 +113,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5; do
-            # Use plain Maven instead of jf mvn to avoid build-info-extractor incompatibility errors  
-            # Artifactory already configured via .mvn/settings.xml with JF_URL from GitHub secrets
-            if mvn clean install -B -e -DskipTests; then
+            if jf mvn clean install -B -e -DskipTests; then
               exit 0
             fi
             echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
@@ -190,8 +185,14 @@ jobs:
           distribution: 'adopt'
       - name: Extracting the artifact name and version 2 from POM file
         run: |
-          echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import xml.etree.ElementTree as ET
+
+          project = ET.parse("pom.xml").getroot()
+          ns = "{http://maven.apache.org/POM/4.0.0}"
+          print(f"ArtifactName={project.findtext(ns + 'artifactId')}")
+          print(f"Version={project.findtext(ns + 'version')}")
+          PY
 
       - name: Docker image reference (host from JF_URL)
         env:
@@ -240,18 +241,9 @@ jobs:
             jf rt ping
             jf rt curl -sS "/artifactory/api/repositories" -o repos.json
           fi
-      # Setup JFrog CLI for Maven - avoid build-info-extractor jar incompatibility issues
-      # Use Artifactory as primary repo with Maven Central fallback via settings.xml
-      - name: Config JFrog CLI for Maven (with compatibility fixes)
-        env:
-          # Disable automatic download of incompatible build-info-extractor jars  
-          JF_MVN_DEPENDENCIES_SERVER_URL: "${{ secrets.JF_URL }}/oss-release-local"
+      - name: Configure JFrog CLI for Maven
         run: |
-          echo "=== Using Artifactory (${JF_URL}) as JFrog dependencies server ==="
-          # Configure Maven repositories (Artifactory proxy) but skip incompatible build-info-extractor 
           jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
-      - name: Verify Maven setup
-        run: mvn -version
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
@@ -260,9 +252,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5; do
-            # Use plain Maven instead of jf mvn to avoid build-info-extractor incompatibility errors  
-            # Artifactory already configured via .mvn/settings.xml with JF_URL from GitHub secrets
-            if mvn clean install -B -e -DskipTests; then
+            if jf mvn clean install -B -e -DskipTests; then
               exit 0
             fi
             echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
@@ -367,8 +357,14 @@ jobs:
           distribution: 'adopt'
       - name: Extracting the artifact name and version 2 from POM file
         run: |
-          echo "ArtifactName=$(mvn help:evaluate -Dexpression=project.artifactId -q -DforceStdout)" >> $GITHUB_ENV
-          echo "Version=$(mvn help:evaluate -Dexpression=project.version -q -DforceStdout)" >> $GITHUB_ENV
+          python3 - <<'PY' >> "$GITHUB_ENV"
+          import xml.etree.ElementTree as ET
+
+          project = ET.parse("pom.xml").getroot()
+          ns = "{http://maven.apache.org/POM/4.0.0}"
+          print(f"ArtifactName={project.findtext(ns + 'artifactId')}")
+          print(f"Version={project.findtext(ns + 'version')}")
+          PY
 
       # Avant setup-jfrog-cli / jf mvn : normalise JF_URL + DOCKER_IMAGE_REF (comme solenglatest).
       - name: Docker image reference (registry host from JF_REGISTRY_HOST or JF_URL)
@@ -418,18 +414,9 @@ jobs:
             jf rt ping
             jf rt curl -sS "/artifactory/api/repositories" -o repos.json
           fi
-      # Setup JFrog CLI for Maven - avoid build-info-extractor jar incompatibility issues
-      # Use Artifactory as primary repo with Maven Central fallback via settings.xml
-      - name: Config JFrog CLI for Maven (with compatibility fixes)
-        env:
-          # Disable automatic download of incompatible build-info-extractor jars  
-          JF_MVN_DEPENDENCIES_SERVER_URL: "${{ secrets.JF_URL }}/oss-release-local"
+      - name: Configure JFrog CLI for Maven
         run: |
-          echo "=== Using Artifactory (${JF_URL}) as JFrog dependencies server ==="
-          # Configure Maven repositories (Artifactory proxy) but skip incompatible build-info-extractor 
           jf mvnc --server-id-resolve=setup-jfrog-cli-server --repo-resolve-releases=${{ vars.MVN_DEV_REPO_RESOLVE_RELEASES }} --repo-resolve-snapshots=${{ vars.MVN_DEV_REPO_RESOLVE_SNAPSHOTS }} --server-id-deploy=setup-jfrog-cli-server --repo-deploy-releases=${{ vars.MVN_DEV_REPO_DEPLOY_RELEASES }} --repo-deploy-snapshots=${{ vars.MVN_DEV_REPO_DEPLOY_SNAPSHOTS }}
-      - name: Verify Maven setup
-        run: mvn -version
       - name: Build Maven 
         env:
           JFROG_PROJECT: ${{ vars.JFROG_PROJECT }}
@@ -438,9 +425,7 @@ jobs:
         run: |
           set -euo pipefail
           for attempt in 1 2 3 4 5; do
-            # Use plain Maven instead of jf mvn to avoid build-info-extractor incompatibility errors  
-            # Artifactory already configured via .mvn/settings.xml with JF_URL from GitHub secrets
-            if mvn clean install -B -e -DskipTests; then
+            if jf mvn clean install -B -e -DskipTests; then
               exit 0
             fi
             echo "jf mvn failed (attempt ${attempt}/5), retry in 60s (ex. 502 sur releases.jfrog.io)..."
