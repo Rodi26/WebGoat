@@ -2,8 +2,8 @@ name: "Frogbot Scan Repository"
 on:
   workflow_dispatch:
   schedule:
-    # The repository will be scanned once a day at 00:00 GMT.
-    - cron: "0 0 * * *"
+    # Daily at 00:15 UTC (offset from :00 to reduce GitHub Actions schedule drops).
+    - cron: "15 0 * * *"
 permissions:
   contents: write
   pull-requests: write
